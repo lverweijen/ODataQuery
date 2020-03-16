@@ -1,7 +1,5 @@
 # odata_query
 
-# TODO Odata interface
-
 ODataQuery <- R6::R6Class(
   "ODataQuery",
   
@@ -99,9 +97,3 @@ or_query <- function(...) {
 not_query <- function(...) {
   return(paste('not', and_query(...)))
 }
-
-# Voorbeelden
-URL <- "https://services.odata.org/V4/TripPinServiceRW"
-trip_service <- ODataQuery$new(URL)
-people_resource <- trip_service$path("People") 
-person <- people_resource$query(filter=and_query(FirstName.eq='Scott'))$one()

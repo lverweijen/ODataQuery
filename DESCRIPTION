@@ -1,0 +1,11 @@
+Package: odata_query
+Type: Package
+Title: Query on OData
+Version: 0.1.0
+Author: Laurent Verweijen
+Maintainer: Laurent Verweijen
+Description: Make querying on OData easier
+License: GPL3
+Encoding: UTF-8
+LazyData: true
+Imports: R6
