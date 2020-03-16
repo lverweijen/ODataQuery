@@ -3,49 +3,50 @@
 ODataQuery <- R6::R6Class(
   "ODataQuery",
   
+  active = list(
+    url = function(value) {
+      stopifnot(missing(value))
+      query_string <- paste0('$', names(self$query_options), '=', self$query_options,
+                             collapse='&')
+      result <- paste0(self$service, self$resource, '?', query_string)
+      return(result)
+    }
+  ),
+  
   public = list(
-    base = NULL,
+    service = NULL,
+    resource = NULL,
     query_options = NULL,
     
-    initialize = function(base) {
-      self$base = base
-      self$query_options = list()
+    initialize = function(service, resource, query_options) {
+      self$service <- service
+      self$resource <- if(missing(resource)) {''} else resource
+      self$query_options <- if(missing(query_options)) {list()} else {query_options}
     },
     
     print = function() {
-      cat("ODataQuery:", self$url(), '\n')
-    },
-    
-    url = function() {
-      query_string <- paste0('$', names(self$query_options), '=', self$query_options,
-                             collapse='&')
-      result <- paste0(self$base, '?', query_string)
-      return(result)
+      cat("ODataQuery:", self$url, '\n')
     },
     
     path = function(...) {
-      resource <- self$clone()
-      resource$base <- paste(self$base, ..., sep = '/')
-      return(resource)
+      resource <- paste(self$resource, ..., sep='/')
+      return(ODataQuery$new(self$service, resource))
     },
     
     get = function(pk) {
-      resource <- self$clone()
-      resource$base <- paste0(self$base, '(', represent_value(pk), ')')
-      return(resource)
+      resource <-paste0(self$base, '(', represent_value(pk), ')')
+      return(ODataQuery$new(self$service, resource))
     },
     
     query = function(...) {
-      query_options <- self$query_options
       new_options <- list(...)
+      query_options <- self$query_options
       query_options[names(new_options)] <- new_options
-      resource <- self$clone()
-      resource$query_options <- query_options
-      return(resource)
+      return(ODataQuery$new(self$service, self$resource, query_options))
     },
     
     all = function(remove_meta = TRUE) {
-      result <- OData::retrieveData(self$url())
+      result <- OData::retrieveData(self$url)
       if(remove_meta) {
         result <- result$value
         result <- lapply(result, function(x) {x[!startsWith(names(x), '@')]})
