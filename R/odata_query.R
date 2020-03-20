@@ -8,7 +8,12 @@ ODataQuery <- R6::R6Class(
       stopifnot(missing(value))
       query_string <- paste0('$', names(self$query_options), '=', self$query_options,
                              collapse='&')
-      result <- paste0(self$service, self$resource, '?', query_string)
+      
+      if(length(self$query_options) > 0) {
+        result <- paste0(self$service, self$resource, '?', query_string)
+      } else {
+        result <- paste0(self$service, self$resource)
+      }
       return(result)
     }
   ),
@@ -34,7 +39,7 @@ ODataQuery <- R6::R6Class(
     },
     
     get = function(pk) {
-      resource <-paste0(self$base, '(', represent_value(pk), ')')
+      resource <-paste0(self$resource, '(', pk, ')')
       return(ODataQuery$new(self$service, resource))
     },
     
@@ -45,24 +50,37 @@ ODataQuery <- R6::R6Class(
       return(ODataQuery$new(self$service, self$resource, query_options))
     },
     
+    filter = function(...) {
+      return(self$query(filter=and_query(...)))
+    },
+    
     all = function(remove_meta = TRUE) {
       result <- OData::retrieveData(self$url)
-      if(remove_meta) {
+      if(remove_meta && 'value' %in% names(result)) {
         result <- result$value
         result <- lapply(result, function(x) {x[!startsWith(names(x), '@')]})
       }
       return(result)
     },
     
-    one = function(remove_meta = TRUE) {
+    one = function(default, remove_meta = TRUE) {
       if(remove_meta) {
         result <- self$all(remove_meta)
       } else {
         result <- self$all(remove_meta)$value
       }
       
-      stopifnot(length(result) == 1)
-      return(result[[1]])
+      if(length(result) > 1) {
+        stop('Multiple items: ', length(result))
+      } else if(length(result) < 1) {
+        if(missing(default)) {
+          stop("No items found")
+        } else {
+          return(default)
+        }
+      } else {
+        return(result[[1]])  
+      }
     }
   ))
 
@@ -73,6 +91,8 @@ represent_value <- function(x) {
     return(x)
   else if (is.logical(x))
     return(tolower(x))
+  else if(is.null(x))
+    return("null")
   stop("unknown type")
 }
 
