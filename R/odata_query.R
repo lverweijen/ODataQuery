@@ -1,4 +1,5 @@
 # odata_query
+# General methods to make OData url handling easier
 
 ODataQuery <- R6::R6Class(
   "ODataQuery",
@@ -31,6 +32,16 @@ ODataQuery <- R6::R6Class(
     
     print = function() {
       cat("ODataQuery:", self$url, '\n')
+      return(invisible(self))
+    },
+    
+    print_data = function(top = 5) {
+      self$print()
+      query <- self
+      if (is.null(top))
+        query <- self$query(top = top)
+      print(query$all())
+      return(invisible(self))
     },
     
     path = function(...) {
@@ -43,6 +54,47 @@ ODataQuery <- R6::R6Class(
       return(ODataQuery$new(self$service, resource))
     },
     
+    func = function(fname, remove_meta = TRUE) {
+      #' Bind an OData function to R
+      #' 
+      #' @description This turns an OData function into an R function
+      #' Parameters are serialized to json.
+      #' Scalar arguments should be passed as atomic vectors.
+      #' Array or object arguments should be passed as list.
+      #' 
+      #' @param fname The name of the function that should be called.
+      #' @param remove_meta logical Whether metadata should be removed from output.
+      
+      force(fname)
+      force(remove_meta)
+     
+      # Create a closure
+      function(...) {
+        args <- list(...)
+        nargs <- names(args)
+        
+        left_hand <- ifelse(nchar(nargs) == 0, '', paste(nargs, '='))
+        right_hand <- lapply(args, function(x) {
+          if(is.list(x)) {
+            RJSONIO::toJSON(x, pretty = FALSE, collapse = '')
+          } else {
+            as.character(x)
+            }
+        })
+        
+        arg_string <- paste(left_hand, right_hand, collapse=',')
+        
+        url <- paste(self$url, fname, sep='/') %>% 
+          paste0('(', arg_string, ')')
+        result <- OData::retrieveData(url)
+        
+        if(remove_meta)
+          result <- lapply(result, function(x) {x[!startsWith(names(x), '@')]})
+        
+        return(result)
+      }
+    },
+    
     query = function(...) {
       new_options <- list(...)
       query_options <- self$query_options
@@ -52,6 +104,14 @@ ODataQuery <- R6::R6Class(
     
     filter = function(...) {
       return(self$query(filter=and_query(...)))
+    },
+    
+    expand = function(...) {
+      return(self$query(expand=paste(..., sep=',')))
+    },
+
+    orderby = function(...) {
+      return(self$query(orderby = paste(..., sep=',')))
     },
     
     all = function(remove_meta = TRUE) {
