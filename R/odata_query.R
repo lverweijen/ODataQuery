@@ -48,12 +48,16 @@ ODataQuery <- R6::R6Class(
       resource <- paste(self$resource, ..., sep='/')
       return(ODataQuery$new(self$service, resource))
     },
-    
-    get = function(pk) {
-      resource <-paste0(self$resource, '(', pk, ')')
+
+    get = function(...) {
+      args <- list(...)
+      left_hand = ifelse(nchar(names(args)) > 0, paste0(names(args), '='), names(args))
+      right_hand = lapply(args, represent_value)
+      body <- paste0(left_hand, right_hand, collapse=",")
+      resource <-paste0(self$resource, '(', body, ')')
       return(ODataQuery$new(self$service, resource))
     },
-    
+
     func = function(fname, remove_meta = TRUE) {
       #' Bind an OData function to R
       #' 
@@ -84,8 +88,8 @@ ODataQuery <- R6::R6Class(
         
         arg_string <- paste(left_hand, right_hand, collapse=',')
         
-        url <- paste(self$url, fname, sep='/') %>% 
-          paste0('(', arg_string, ')')
+        url <- paste(self$url, fname, sep='/')
+        url <- paste0(url, '(', arg_string, ')')
         result <- OData::retrieveData(url)
         
         if(remove_meta)
@@ -94,26 +98,47 @@ ODataQuery <- R6::R6Class(
         return(result)
       }
     },
-    
+
     query = function(...) {
       new_options <- list(...)
       query_options <- self$query_options
       query_options[names(new_options)] <- new_options
       return(ODataQuery$new(self$service, self$resource, query_options))
     },
-    
+
+    top = function(n) {
+      return(self$query(top = n))
+    },
+
+    skip = function(n) {
+      return(self$query(skip = n))
+    },
+
+    select = function(...) {
+      return(self$query(select=paste(..., sep=',')))
+    },
+
     filter = function(...) {
       return(self$query(filter=and_query(...)))
     },
-    
+
     expand = function(...) {
       return(self$query(expand=paste(..., sep=',')))
     },
 
     orderby = function(...) {
-      return(self$query(orderby = paste(..., sep=',')))
+      keys <- c(...)
+      orders <- ifelse(startsWith(keys, '-'),
+                       paste(substr(keys, 2, 999), 'desc'),
+                       keys)
+      orderby <- paste(orders, collapse=',')
+      return(self$query(orderby = orderby))
     },
-    
+
+    search = function(s) {
+      return(self$query(search = s))
+    },
+
     all = function(remove_meta = TRUE) {
       result <- OData::retrieveData(self$url)
       if(remove_meta && 'value' %in% names(result)) {
@@ -144,16 +169,21 @@ ODataQuery <- R6::R6Class(
     }
   ))
 
+#' Sanitize parameters for use in url
 represent_value <- function(x) {
   if(is.character(x))
-    return(paste0("'", x, "'"))
+    # Escape single quotes
+    result <- paste0("'", gsub("'", "''", x), "'")
   else if (is.numeric(x))
-    return(x)
+    result <- x
   else if (is.logical(x))
-    return(tolower(x))
+    result <- tolower(x)
   else if(is.null(x))
-    return("null")
-  stop("unknown type")
+    result <- "null"
+  else
+    stop("unknown type")
+
+  return(result)
 }
 
 binop_query <- function(op, ...) {
@@ -167,14 +197,17 @@ binop_query <- function(op, ...) {
   return(paste0('(', query, ')'))
 }
 
+#' Create an and-filter with parameters sanitized
 and_query <- function(...) {
   return(binop_query(' and ', ...))
 }
 
+#' Create an or-filter with parameters sanitized
 or_query <- function(...) {
   return(binop_query(' or ', ...))
 }
 
+#' Create a negative filter with parameters sanitized
 not_query <- function(...) {
   return(paste('not', and_query(...)))
 }
