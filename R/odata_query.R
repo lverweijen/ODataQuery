@@ -7,7 +7,7 @@ ODataQuery <- R6::R6Class(
   active = list(
     url = function(value) {
       stopifnot(missing(value))
-      query_string <- paste0('$', names(self$query_options), '=', self$query_options,
+      query_string <- paste0(names(self$query_options), '=', self$query_options,
                              collapse='&')
       
       if(length(self$query_options) > 0) {
@@ -107,23 +107,23 @@ ODataQuery <- R6::R6Class(
     },
 
     top = function(n) {
-      return(self$query(top = n))
+      return(self$query(`$top` = n))
     },
 
     skip = function(n) {
-      return(self$query(skip = n))
+      return(self$query(`$skip` = n))
     },
 
     select = function(...) {
-      return(self$query(select=paste(..., sep=',')))
+      return(self$query(`$select` = paste(..., sep=',')))
     },
 
     filter = function(...) {
-      return(self$query(filter=and_query(...)))
+      return(self$query(`$filter` = and_query(...)))
     },
 
     expand = function(...) {
-      return(self$query(expand=paste(..., sep=',')))
+      return(self$query(`$expand` = paste(..., sep=',')))
     },
 
     orderby = function(...) {
@@ -132,11 +132,11 @@ ODataQuery <- R6::R6Class(
                        paste(substr(keys, 2, 999), 'desc'),
                        keys)
       orderby <- paste(orders, collapse=',')
-      return(self$query(orderby = orderby))
+      return(self$query(`$orderby` = orderby))
     },
 
     search = function(s) {
-      return(self$query(search = s))
+      return(self$query(`$search` = s))
     },
 
     all = function(remove_meta = TRUE) {
