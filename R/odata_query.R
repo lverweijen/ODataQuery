@@ -139,6 +139,15 @@ ODataQuery <- R6::R6Class(
       return(self$query(`$search` = s))
     },
 
+    compute = function(...) {
+      args <- list(...)
+      right_hand <- ifelse(nchar(names(args)) == 0,
+                           '',
+                           paste("AS", names(args)))
+      query <- paste(args, right_hand, collapse=',')
+      return(self$query(`$compute` = query))
+    },
+
     all = function(remove_meta = TRUE) {
       result <- OData::retrieveData(self$url)
       if(remove_meta && 'value' %in% names(result)) {
