@@ -138,7 +138,8 @@ ODataQuery <- R6::R6Class(
 #' @export
 retrieve_data <- function(url, metadata = c("none", "minimal", "all"), simplify) {
   metadata <- match.arg(metadata)
-  req <- httr::GET(url, httr::add_headers("Accept" = paste0("application/json;odata.metadata=", metadata)))
+  req <- httr::GET(url, httr::add_headers(Accept = paste0("application/json;odata.metadata=", metadata),
+                                          UserAgent = "https://github.com/lverweijen/odata_r"))
   httr::stop_for_status(req)
   json <- httr::content(req, as = "text")
   data <- jsonlite::fromJSON(json, simplifyVector = simplify)
