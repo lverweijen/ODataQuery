@@ -19,7 +19,7 @@ ODataQuery <- R6::R6Class(
       } else {
         result <- paste0(self$service, self$resource)
       }
-      return(result)
+      URLencode(result, repeated = TRUE)
     }
   ),
   
@@ -34,17 +34,14 @@ ODataQuery <- R6::R6Class(
       self$query_options <- if (missing(query_options)) {list()} else {query_options}
     },
     
-    print = function() {
+    print = function(top = 0, ...) {
       cat("ODataQuery:", self$url, '\n')
-      invisible(self)
-    },
-    
-    print_data = function(top = 5) {
-      self$print()
-      query <- self
-      if (is.null(top))
-        query <- self$query(top = top)
-      print(query$all())
+      
+      if (top > 0) {
+        df <- self$top(top)$retrieve(metadata = "minimal", simplifyVector = TRUE)
+        print(df, ...)
+      }
+      
       invisible(self)
     },
     
@@ -62,8 +59,9 @@ ODataQuery <- R6::R6Class(
       ODataQuery$new(self$service, resource)
     },
 
-    func = function(fname, metadata, simplify) {
-      odata_function(self$url, metadata = metadata, simplify = simplify)
+    func = function(fname, ...) {
+      url <- paste(self$url, fname, sep = "/")
+      odata_function(url, ...)
     },
 
     query = function(...) {
@@ -136,23 +134,13 @@ ODataQuery <- R6::R6Class(
 #' @param metadata Which metadata is included
 #' @param simplify Simplifies nested lists into vectors and data frames
 #' @export
-retrieve_data <- function(url, metadata = c("none", "minimal", "all"), simplify) {
+retrieve_data <- function(url, metadata = c("none", "minimal", "all"), simplifyVector = FALSE, ...) {
   metadata <- match.arg(metadata)
   req <- httr::GET(url, httr::add_headers(Accept = paste0("application/json;odata.metadata=", metadata),
                                           UserAgent = "https://github.com/lverweijen/odata_r"))
   httr::stop_for_status(req)
   json <- httr::content(req, as = "text")
-  data <- jsonlite::fromJSON(json, simplifyVector = simplify)
-  
-  if (!is.null(data$value)) {
-    value <- data$value
-    annotations <- data[startsWith(names(data), '@')]
-    attributes(value) <- c(attributes(value), annotations)
-  } else {
-    value <- data
-  }
-  
-  value
+  jsonlite::fromJSON(json, simplifyVector = simplifyVector, ...)
 }
 
 #' Retrieve data. If data is paged, concatenate pages.
@@ -166,8 +154,8 @@ retrieve_all <- function(url, ...) {
   i <- 1
   while (!is.null(next_link)) {
     data <- retrieve_data(next_link, ...)
-    pages[[i]] <- data
-    next_link <- attr(data, '@odata.nextLink')
+    pages[[i]] <- data$value %||% data
+    next_link <- data[['@odata.nextLink']]
     i <- i + 1
   }
 
@@ -186,7 +174,14 @@ retrieve_all <- function(url, ...) {
 #' @return Single value or default if none. Otherwise an error is thrown.
 #' @export
 retrieve_one <- function(url, default = stop("value not found"), ...) {
-  value <- retrieve_data(url, ...)
+  data <- retrieve_data(url, ...)
+
+  # Data is already a singleton
+  if (is.null(data[["value"]]))
+    return (data)
+
+  # Make data a singleton
+  value <- data$value
   n <- nrow(value) %||% length(value)
 
   if (n < 1)
@@ -194,10 +189,10 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
   else if (n > 1)
     result <- stop("multiple values")
   else if (is.data.frame(value))
-    result <- lapply(value, function(col) col[[1]])
+    result <- c(data[names(data) != 'value'], lapply(value, function(col) col[[1]]))
   else
-    result <- value[[1]]
-  
+    result <- c(data[names(data) != 'value'], value[[1]])
+
   result
 }
 
@@ -211,9 +206,9 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' @inheritsParams retrieve_data
 #' #return An R function
 #' @export
-odata_function <- function(url, metadata, simplify) {
+odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   force(metadata)
-  force(simplify)
+  force(list(...))
 
   # Create a closure
   function(...) {
@@ -223,10 +218,10 @@ odata_function <- function(url, metadata, simplify) {
     left_hand <- ifelse(nchar(nargs) == 0, '', paste(nargs, '='))
     right_hand <- lapply(args, jsonlite::toJSON, auto_unbox = TRUE)
     arg_string <- paste(left_hand, right_hand, collapse=',')
+    encoded_args <- URLencode(paste0('(', arg_string, ')'))
 
-    url <- paste(self$url, fname, sep='/')
-    url <- paste0(url, '(', arg_string, ')')
-    retrieve_data(url, metadata=metadata, simplify=simplify)
+    url <- paste0(url, encoded_args)
+    retrieve_data(url, ...)
   }
 }
 
@@ -278,5 +273,12 @@ represent_value <- function(x) {
 
   return(result)
 }
-# vim: ts=2 sts=2 sw=2 expandtab
 
+`%||%` <- function(x, y) {
+  if (is.null(x))
+    y
+  else
+    x
+}
+
+# vim: ts=2 sts=2 sw=2 expandtab
