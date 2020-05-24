@@ -11,11 +11,11 @@ ODataQuery <- R6::R6Class(
   active = list(
     url = function(value) {
       stopifnot(missing(value))
-      query_string <- paste0(names(self$query_options), '=', self$query_options,
-                             collapse='&')
+      query_string <- paste0(names(self$query_options), "=", self$query_options,
+                             collapse = "&")
 
       if (length(self$query_options) > 0) {
-        result <- paste0(self$service, self$resource, '?', query_string)
+        result <- paste0(self$service, self$resource, "?", query_string)
       } else {
         result <- paste0(self$service, self$resource)
       }
@@ -28,17 +28,18 @@ ODataQuery <- R6::R6Class(
     resource = NULL,
     query_options = NULL,
 
-    initialize = function(service, resource, query_options) {
+    initialize = function(service, resource = "", query_options = list()) {
       self$service <- service
-      self$resource <- if(missing(resource)) {''} else resource
-      self$query_options <- if (missing(query_options)) {list()} else {query_options}
+      self$resource <- resource
+      self$query_options <- query_options
     },
 
     print = function(top = 3, ...) {
-      cat("ODataQuery:", self$url, '\n')
+      cat("ODataQuery:", self$url, "\n")
 
       if (top > 0) {
-        df <- self$top(top)$retrieve(metadata = "minimal", simplifyVector = TRUE)
+        df <- self$top(top)$retrieve(metadata = "minimal",
+                                     simplifyVector = TRUE)
         print(df, ...)
       }
 
@@ -46,16 +47,18 @@ ODataQuery <- R6::R6Class(
     },
 
     path = function(...) {
-      resource <- paste(self$resource, ..., sep='/')
+      resource <- paste(self$resource, ..., sep = "/")
       ODataQuery$new(self$service, resource)
     },
 
     get = function(...) {
       args <- list(...)
-      left_hand = ifelse(nchar(names(args)) > 0, paste0(names(args), '='), names(args))
-      right_hand = lapply(args, represent_value)
-      body <- paste0(left_hand, right_hand, collapse=",")
-      resource <-paste0(self$resource, '(', body, ')')
+      left_hand <- ifelse(nchar(names(args)) > 0,
+                          paste0(names(args), "="),
+                          names(args))
+      right_hand <- lapply(args, represent_value)
+      body <- paste0(left_hand, right_hand, collapse = ",")
+      resource <- paste0(self$resource, "(', body, ')")
       ODataQuery$new(self$service, resource)
     },
 
@@ -80,7 +83,7 @@ ODataQuery <- R6::R6Class(
     },
 
     select = function(...) {
-      return(self$query(`$select` = paste(..., sep=',')))
+      return(self$query(`$select` = paste(..., sep = ",")))
     },
 
     filter = function(...) {
@@ -88,15 +91,15 @@ ODataQuery <- R6::R6Class(
     },
 
     expand = function(...) {
-      return(self$query(`$expand` = paste(..., sep=',')))
+      return(self$query(`$expand` = paste(..., sep = ",")))
     },
 
     orderby = function(...) {
       keys <- c(...)
-      orders <- ifelse(startsWith(keys, '-'),
-                       paste(substr(keys, 2, 999), 'desc'),
+      orders <- ifelse(startsWith(keys, "-"),
+                       paste(substr(keys, 2, 999), "desc"),
                        keys)
-      orderby <- paste(orders, collapse=',')
+      orderby <- paste(orders, collapse = ",")
       return(self$query(`$orderby` = orderby))
     },
 
@@ -107,9 +110,9 @@ ODataQuery <- R6::R6Class(
     compute = function(...) {
       args <- list(...)
       right_hand <- ifelse(nchar(names(args)) == 0,
-                           '',
+                           "",
                            paste("AS", names(args)))
-      query <- paste(args, right_hand, collapse=',')
+      query <- paste(args, right_hand, collapse = ",")
       return(self$query(`$compute` = query))
     },
 
@@ -134,13 +137,18 @@ ODataQuery <- R6::R6Class(
 #' @param metadata Which metadata is included
 #' @param simplify Simplifies nested lists into vectors and data frames
 #' @export
-retrieve_data <- function(url, metadata = c("none", "minimal", "all"), simplifyVector = FALSE, ...) {
+retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
+                          simplifyVector = FALSE, ...) {
+
   metadata <- match.arg(metadata)
-  req <- httr::GET(url,
-                   httr::add_headers(Accept = paste0("application/json;odata.metadata=", metadata),
-                                     UserAgent = "https://github.com/lverweijen/odata_r"))
+  accept <- paste0("application/json;odata.metadata=", metadata)
+  useragent <- "https://github.com/lverweijen/odata_r"
+
+  req <- httr::GET(url, httr::add_headers(Accept = accept,
+                                          UserAgent = useragent))
   httr::stop_for_status(req)
-  json <- httr::content(req, as = "text", encoding = 'UTF-8')
+
+  json <- httr::content(req, as = "text", encoding = "UTF-8")
   jsonlite::fromJSON(json, simplifyVector = simplifyVector, ...)
 }
 
@@ -156,7 +164,7 @@ retrieve_all <- function(url, ...) {
   while (!is.null(next_link)) {
     data <- retrieve_data(next_link, ...)
     pages[[i]] <- data$value %||% data
-    next_link <- data[['@odata.nextLink']]
+    next_link <- data[["@odata.nextLink"]]
     i <- i + 1
   }
 
@@ -170,7 +178,8 @@ retrieve_all <- function(url, ...) {
 
 #' Retrieve single instance.
 #'
-#' @param default The default if nothing was found. If not specified, an error is thrown in this case.
+#' @param default The default if nothing was found.
+#' If not specified, an error is thrown in this case.
 #' @inheritsParams retrieve_data
 #' @return Single value or default if none. Otherwise an error is thrown.
 #' @export
@@ -179,7 +188,7 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 
   # Data is already a singleton
   if (is.null(data[["value"]]))
-    return (data)
+    return(data)
 
   # Make data a singleton
   value <- data$value
@@ -190,9 +199,10 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
   else if (n > 1)
     result <- stop("multiple values")
   else if (is.data.frame(value))
-    result <- c(data[names(data) != 'value'], lapply(value, function(col) col[[1]]))
+    result <- c(data[names(data) != "value"],
+                lapply(value, function(col) col[[1]]))
   else
-    result <- c(data[names(data) != 'value'], value[[1]])
+    result <- c(data[names(data) != "value"], value[[1]])
 
   result
 }
@@ -216,10 +226,10 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
     args <- list(...)
     nargs <- names(args)
 
-    left_hand <- ifelse(nchar(nargs) == 0, '', paste(nargs, '='))
+    left_hand <- ifelse(nchar(nargs) == 0, "", paste(nargs, "="))
     right_hand <- lapply(args, jsonlite::toJSON, auto_unbox = TRUE)
-    arg_string <- paste(left_hand, right_hand, collapse=',')
-    encoded_args <- URLencode(paste0('(', arg_string, ')'))
+    arg_string <- paste(left_hand, right_hand, collapse = ",")
+    encoded_args <- URLencode(paste0("(", arg_string, ")"))
 
     url <- paste0(url, encoded_args)
     retrieve_data(url, ...)
@@ -229,45 +239,51 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
 #' Create an and-filter with parameters sanitized
 #' @export
 and_query <- function(...) {
-  return(binop_query(' and ', ...))
+  return(binop_query(" and ", ...))
 }
 
 #' Create an or-filter with parameters sanitized
 #' @export
 or_query <- function(...) {
-  return(binop_query(' or ', ...))
+  return(binop_query(" or ", ...))
 }
 
 #' Create a negative filter with parameters sanitized
 #' @export
 not_query <- function(...) {
-  return(paste('not', and_query(...)))
+  return(paste("not", and_query(...)))
 }
 
 #' Helper for creating and / or queries
 #' @noRd
 binop_query <- function(op, ...) {
   args <- list(...)
-  nargs <- if(is.null(names(args))) {rep("", length(args))} else {names(args)}
-  left_hand <- sub('.', ' ', nargs, fixed = TRUE)
+
+   if (is.null(names(args))) {
+     nargs <- rep("", length(args))
+  } else {
+    nargs <- names(args)
+  }
+
+  left_hand <- sub(".', ' ", nargs, fixed = TRUE)
   right_hand <- ifelse(nchar(nargs) > 0,
                        lapply(args, represent_value),
                        args)
   query <- paste(left_hand, right_hand, collapse = op)
-  return(paste0('(', query, ')'))
+  return(paste0("(", query, ")"))
 }
 
 #' Sanitize parameters for use in url
 #' @noRd
 represent_value <- function(x) {
-  if(is.character(x))
+  if (is.character(x))
     # Escape single quotes
-    result <- paste0("'", gsub("'", "''", x), "'")
+    result <- paste0("'", gsub("'", "''", x), "\"")
   else if (is.numeric(x))
     result <- x
   else if (is.logical(x))
     result <- tolower(x)
-  else if(is.null(x))
+  else if (is.null(x))
     result <- "null"
   else
     stop("unknown type")
