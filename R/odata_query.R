@@ -7,13 +7,13 @@
 #' @export
 ODataQuery <- R6::R6Class(
   "ODataQuery",
-  
+
   active = list(
     url = function(value) {
       stopifnot(missing(value))
       query_string <- paste0(names(self$query_options), '=', self$query_options,
                              collapse='&')
-      
+
       if (length(self$query_options) > 0) {
         result <- paste0(self$service, self$resource, '?', query_string)
       } else {
@@ -22,29 +22,29 @@ ODataQuery <- R6::R6Class(
       URLencode(result, repeated = TRUE)
     }
   ),
-  
+
   public = list(
     service = NULL,
     resource = NULL,
     query_options = NULL,
-    
+
     initialize = function(service, resource, query_options) {
       self$service <- service
       self$resource <- if(missing(resource)) {''} else resource
       self$query_options <- if (missing(query_options)) {list()} else {query_options}
     },
-    
-    print = function(top = 0, ...) {
+
+    print = function(top = 3, ...) {
       cat("ODataQuery:", self$url, '\n')
-      
+
       if (top > 0) {
         df <- self$top(top)$retrieve(metadata = "minimal", simplifyVector = TRUE)
         print(df, ...)
       }
-      
+
       invisible(self)
     },
-    
+
     path = function(...) {
       resource <- paste(self$resource, ..., sep='/')
       ODataQuery$new(self$service, resource)
@@ -117,14 +117,14 @@ ODataQuery <- R6::R6Class(
     retrieve = function(...) {
       retrieve_data(self$url, ...)
     },
-    
+
     #' @inheritsParams retrieve_all()
     all = function(...) {
       retrieve_all(self$url, ...)
     },
-    
+
     #' @inheritsParams retrieve_one()
-    one = function(default, ...) {
+    one = function(...) {
       retrieve_one(self$url, ...)
     }
   ))
@@ -136,10 +136,11 @@ ODataQuery <- R6::R6Class(
 #' @export
 retrieve_data <- function(url, metadata = c("none", "minimal", "all"), simplifyVector = FALSE, ...) {
   metadata <- match.arg(metadata)
-  req <- httr::GET(url, httr::add_headers(Accept = paste0("application/json;odata.metadata=", metadata),
-                                          UserAgent = "https://github.com/lverweijen/odata_r"))
+  req <- httr::GET(url,
+                   httr::add_headers(Accept = paste0("application/json;odata.metadata=", metadata),
+                                     UserAgent = "https://github.com/lverweijen/odata_r"))
   httr::stop_for_status(req)
-  json <- httr::content(req, as = "text")
+  json <- httr::content(req, as = "text", encoding = 'UTF-8')
   jsonlite::fromJSON(json, simplifyVector = simplifyVector, ...)
 }
 
@@ -150,7 +151,7 @@ retrieve_data <- function(url, metadata = c("none", "minimal", "all"), simplifyV
 retrieve_all <- function(url, ...) {
   pages <- list()
   next_link <- url
-  
+
   i <- 1
   while (!is.null(next_link)) {
     data <- retrieve_data(next_link, ...)
@@ -197,12 +198,12 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 }
 
 #' Make an OData function available to R
-#' 
+#'
 #' @description This turns an OData function into an R function
 #' Parameters are serialized to json.
 #' Scalar arguments should be passed as atomic vectors.
 #' Array or object arguments should be passed as list.
-#' 
+#'
 #' @inheritsParams retrieve_data
 #' #return An R function
 #' @export
@@ -249,8 +250,8 @@ binop_query <- function(op, ...) {
   args <- list(...)
   nargs <- if(is.null(names(args))) {rep("", length(args))} else {names(args)}
   left_hand <- sub('.', ' ', nargs, fixed = TRUE)
-  right_hand <- ifelse(nchar(nargs) > 0, 
-                       lapply(args, represent_value), 
+  right_hand <- ifelse(nchar(nargs) > 0,
+                       lapply(args, represent_value),
                        args)
   query <- paste(left_hand, right_hand, collapse = op)
   return(paste0('(', query, ')'))
@@ -274,6 +275,8 @@ represent_value <- function(x) {
   return(result)
 }
 
+#' Return x if not null, y otherwise (ruby style or)
+#' @noRd
 `%||%` <- function(x, y) {
   if (is.null(x))
     y
