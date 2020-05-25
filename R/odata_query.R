@@ -90,7 +90,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
                           names(args))
       right_hand <- lapply(args, represent_value)
       body <- paste0(left_hand, right_hand, collapse = ",")
-      resource <- paste0(self$resource, "(', body, ')")
+      resource <- paste0(self$resource, "(", body, ")")
       ODataQuery$new(self$service, resource)
     },
 
@@ -345,7 +345,7 @@ binop_query <- function(op, ...) {
     nargs <- names(args)
   }
 
-  left_hand <- sub(".', ' ", nargs, fixed = TRUE)
+  left_hand <- sub(".", " ", nargs, fixed = TRUE)
   right_hand <- ifelse(nchar(nargs) > 0,
                        lapply(args, represent_value),
                        args)
@@ -358,7 +358,7 @@ binop_query <- function(op, ...) {
 represent_value <- function(x) {
   if (is.character(x))
     # Escape single quotes
-    result <- paste0("'", gsub("'", "''", x), "\"")
+    result <- paste0("'", gsub("'", "''", x), "'")
   else if (is.numeric(x))
     result <- x
   else if (is.logical(x))
