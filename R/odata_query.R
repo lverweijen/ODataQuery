@@ -2,13 +2,18 @@
 # General methods to make OData url handling easier
 
 
-#' Class that wraps an OData query
+#' R6 class that represents an OData query
 #'
+#' This abstracts away the OData query
+#'
+#' Use methods such as `$path()` to find a path.
+#' Use methods such as `$filter()` to make your query.
+#' Use methods such as  `$all()` to obtain the result.
 #' @export
-ODataQuery <- R6::R6Class(
-  "ODataQuery",
-
+ODataQuery <- R6::R6Class("ODataQuery",
   active = list(
+    #' @field url Generate (encoded) url
+    #' @param value Read-only
     url = function(value) {
       stopifnot(missing(value))
       query_string <- paste0(names(self$query_options), "=", self$query_options,
@@ -24,16 +29,37 @@ ODataQuery <- R6::R6Class(
   ),
 
   public = list(
+
+    #' @field service Service endpoint
     service = NULL,
+
+    #' @field resource Resource name
     resource = NULL,
+
+    #' @field query_options Options to query on
     query_options = NULL,
 
+    #' Create new query
+    #'
+    #' Create a class representing a query.
+    #'
+    #' @param service The url of the endpoint to connect to.
+    #' This url should not end with backslash.
+    #' @param resource Don't use. Use $path() instead.
+    #' @param query_options Don't use. Use methods like $select(),
+    #' $filter(), $query() instead.
     initialize = function(service, resource = "", query_options = list()) {
       self$service <- service
       self$resource <- resource
       self$query_options <- query_options
     },
 
+    #' @title
+    #' Print query
+    #'
+    #' @param top Number of results to print
+    #' @param ... Additional parameters are passed to print
+    # inheritDotParams print
     print = function(top = 3, ...) {
       cat("ODataQuery:", self$url, "\n")
 
@@ -46,11 +72,17 @@ ODataQuery <- R6::R6Class(
       invisible(self)
     },
 
+    #' Path to the resource
+    #'
+    #' @param ... Components that lead to resource path
     path = function(...) {
       resource <- paste(self$resource, ..., sep = "/")
       ODataQuery$new(self$service, resource)
     },
 
+    #' Query an individual record by ID
+    #'
+    #' @param ... ID-parameters (named or unnamed)
     get = function(...) {
       args <- list(...)
       left_hand <- ifelse(nchar(names(args)) > 0,
@@ -62,11 +94,20 @@ ODataQuery <- R6::R6Class(
       ODataQuery$new(self$service, resource)
     },
 
+    #' Path to an OData function
+    #'
+    #' @param fname Name of the function
+    #' @param ... Options passed to retrieve_data
+    # inheritDotParams retrieve_data
+    #' @return closure
     func = function(fname, ...) {
       url <- paste(self$url, fname, sep = "/")
       odata_function(url, ...)
     },
 
+    #' Supply custom query options that do not start with $
+    #'
+    #' @param ... Named lists where the names are custom query options
     query = function(...) {
       new_options <- list(...)
       query_options <- self$query_options
@@ -74,26 +115,45 @@ ODataQuery <- R6::R6Class(
       return(ODataQuery$new(self$service, self$resource, query_options))
     },
 
+    #' Limit the number of results to n
+    #'
+    #' @param n Number of records to return at most
     top = function(n) {
       return(self$query(`$top` = n))
     },
 
+    #' Skip items
+    #'
+    #' @param n Number of items to skip
     skip = function(n) {
       return(self$query(`$skip` = n))
     },
 
+    #' Select fields
+    #'
+    #' @param ... Fields to select
     select = function(...) {
       return(self$query(`$select` = paste(..., sep = ",")))
     },
 
+    #' Apply filter to result
+    #'
+    #' @param ... Passed to and_query
+    #' @inheritParams and_query()
     filter = function(...) {
       return(self$query(`$filter` = and_query(...)))
     },
 
+    #' Expand on expansion properties
+    #'
+    #' @param ... Properties to extend on
     expand = function(...) {
       return(self$query(`$expand` = paste(..., sep = ",")))
     },
 
+    #' Order results by one or more keys
+    #' @param ... Keys to order by. To order in descending order, the key can
+    #' be prefixed by a negative sign.
     orderby = function(...) {
       keys <- c(...)
       orders <- ifelse(startsWith(keys, "-"),
@@ -103,10 +163,18 @@ ODataQuery <- R6::R6Class(
       return(self$query(`$orderby` = orderby))
     },
 
+    #' Search the entity
+    #'
+    #' @param s Search string as defined by the endpoint.
     search = function(s) {
       return(self$query(`$search` = s))
     },
 
+    #' Compute properties
+    #'
+    #' Add additional properties to query computed from other attributes
+    #'
+    #' @param ... Named list of properties to compute
     compute = function(...) {
       args <- list(...)
       right_hand <- ifelse(nchar(names(args)) == 0,
@@ -116,17 +184,28 @@ ODataQuery <- R6::R6Class(
       return(self$query(`$compute` = query))
     },
 
-    #' @inheritsParams retrieve_data
+    #' Retrieve data
+    #'
+    #' @param ... Passed to retrieve_data
+    #' @inheritParams retrieve_data(...)
     retrieve = function(...) {
       retrieve_data(self$url, ...)
     },
 
-    #' @inheritsParams retrieve_all()
+    #' Retrieve all data pages
+    #'
+    #' Return concatenation of value of all pages
+    #'
+    #' @param ... Passed to retrieve_all
+    # inheritDotParams retrieve_all(...)
     all = function(...) {
       retrieve_all(self$url, ...)
     },
 
-    #' @inheritsParams retrieve_one()
+    #' Retrieve individual
+    #'
+    #' @param ... Passed to retrieve_one
+    #' @inheritParams retrieve_one(...)
     one = function(...) {
       retrieve_one(self$url, ...)
     }
@@ -135,7 +214,8 @@ ODataQuery <- R6::R6Class(
 #' Retrieve data
 #'
 #' @param metadata Which metadata is included
-#' @param simplify Simplifies nested lists into vectors and data frames
+#' @param simplifyVector Simplifies nested lists into vectors and data frames
+#' @inheritDotParams jsonlite::fromJSON
 #' @export
 retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
                           simplifyVector = FALSE, ...) {
@@ -154,7 +234,7 @@ retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
 
 #' Retrieve data. If data is paged, concatenate pages.
 #'
-#' @inheritsParams retrieve_data
+#' @inheritParams retrieve_data
 #' @export
 retrieve_all <- function(url, ...) {
   pages <- list()
@@ -180,7 +260,7 @@ retrieve_all <- function(url, ...) {
 #'
 #' @param default The default if nothing was found.
 #' If not specified, an error is thrown in this case.
-#' @inheritsParams retrieve_data
+#' @inheritParams retrieve_data
 #' @return Single value or default if none. Otherwise an error is thrown.
 #' @export
 retrieve_one <- function(url, default = stop("value not found"), ...) {
@@ -214,7 +294,7 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' Scalar arguments should be passed as atomic vectors.
 #' Array or object arguments should be passed as list.
 #'
-#' @inheritsParams retrieve_data
+#' @inheritParams retrieve_data
 #' #return An R function
 #' @export
 odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {

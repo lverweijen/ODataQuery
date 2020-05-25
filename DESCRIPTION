@@ -1,11 +1,22 @@
-Package: odata_query
+Package: OdataQuery
 Type: Package
 Title: Query on OData
 Version: 0.1.0
-Author: Laurent Verweijen
-Maintainer: Laurent Verweijen
-Description: Make querying on OData easier
+Authors@R: person("Laurent", "Verweijen",
+    email = "lauwerund+github@gmail.com",
+    role = c("aut", "cre"))
+Description: Make querying on OData easier. It exposes an OdataQuery object
+    that can be manipuled that provides features such as selection, filtering
+    ordering.
 License: GPL3
 Encoding: UTF-8
 LazyData: true
-Imports: R6, httr, jsonlite
+Imports:
+    R6,
+    httr,
+    jsonlite
+RoxygenNote: 7.1.0
+Suggests:
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
