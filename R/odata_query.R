@@ -2,13 +2,20 @@
 # General methods to make OData url handling easier
 
 
-#' R6 class that represents an OData query
+#' @title ODataQuery
 #'
-#' This abstracts away the OData query
+#' @description R6 class that represents an OData query
 #'
-#' Use methods such as `$path()` to find a path.
-#' Use methods such as `$filter()` to make your query.
-#' Use methods such as  `$all()` to obtain the result.
+#' @details
+#'
+#' This class has methods to build and navigate OData services:
+#'
+#' \itemize{
+#' \item Use methods such as `$path()` and `$get()` to find a path.
+#' \item Use methods such as `$select()` and `$filter()` to make your query.
+#' \item Use methods such as`$retrieve()`, `$all()` and `$one()`to obtain
+#' the results.
+#' }
 #' @export
 ODataQuery <- R6::R6Class("ODataQuery",
   active = list(
@@ -39,9 +46,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @field query_options Options to query on
     query_options = NULL,
 
-    #' Create new query
-    #'
-    #' Create a class representing a query.
+    #' @description Create a class representing a query.
     #'
     #' @param service The url of the endpoint to connect to.
     #' This url should not end with backslash.
@@ -54,8 +59,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       self$query_options <- query_options
     },
 
-    #' @title
-    #' Print query
+    #' @description Print query
     #'
     #' @param top Number of results to print
     #' @param ... Additional parameters are passed to print
@@ -72,7 +76,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       invisible(self)
     },
 
-    #' Path to the resource
+    #' @description Supply path to the resource
     #'
     #' @param ... Components that lead to resource path
     path = function(...) {
@@ -80,7 +84,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       ODataQuery$new(self$service, resource)
     },
 
-    #' Query an individual record by ID
+    #' @description Query an individual record by ID parameters
     #'
     #' @param ... ID-parameters (named or unnamed)
     get = function(...) {
@@ -94,7 +98,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       ODataQuery$new(self$service, resource)
     },
 
-    #' Path to an OData function
+    #' @description Path to an OData function
     #'
     #' @param fname Name of the function
     #' @param ... Options passed to retrieve_data
@@ -105,7 +109,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       odata_function(url, ...)
     },
 
-    #' Supply custom query options that do not start with $
+    #' @description Supply custom query options that do not start with $
     #'
     #' @param ... Named lists where the names are custom query options
     query = function(...) {
@@ -115,28 +119,30 @@ ODataQuery <- R6::R6Class("ODataQuery",
       return(ODataQuery$new(self$service, self$resource, query_options))
     },
 
-    #' Limit the number of results to n
+    #' @description Limit the number of results to n
     #'
     #' @param n Number of records to return at most
     top = function(n) {
+      stopifnot(is.numeric(n))
       return(self$query(`$top` = n))
     },
 
-    #' Skip items
+    #' @description Skip first few items
     #'
     #' @param n Number of items to skip
     skip = function(n) {
+      stopifnot(is.numeric(n))
       return(self$query(`$skip` = n))
     },
 
-    #' Select fields
+    #' @description Select fields. If not present, all fields are returned.
     #'
     #' @param ... Fields to select
     select = function(...) {
       return(self$query(`$select` = paste(..., sep = ",")))
     },
 
-    #' Apply filter to result
+    #' @description Apply filter to result
     #'
     #' @param ... Passed to and_query
     #' @inheritParams and_query()
@@ -144,14 +150,14 @@ ODataQuery <- R6::R6Class("ODataQuery",
       return(self$query(`$filter` = and_query(...)))
     },
 
-    #' Expand on expansion properties
+    #' @description Expand on expansion properties
     #'
     #' @param ... Properties to extend on
     expand = function(...) {
       return(self$query(`$expand` = paste(..., sep = ",")))
     },
 
-    #' Order results by one or more keys
+    #' @description Order results by one or more keys
     #' @param ... Keys to order by. To order in descending order, the key can
     #' be prefixed by a negative sign.
     orderby = function(...) {
@@ -163,14 +169,14 @@ ODataQuery <- R6::R6Class("ODataQuery",
       return(self$query(`$orderby` = orderby))
     },
 
-    #' Search the entity
+    #' @description Search the entity
     #'
     #' @param s Search string as defined by the endpoint.
     search = function(s) {
       return(self$query(`$search` = s))
     },
 
-    #' Compute properties
+    #' @description Compute properties
     #'
     #' Add additional properties to query computed from other attributes
     #'
@@ -184,7 +190,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       return(self$query(`$compute` = query))
     },
 
-    #' Retrieve data
+    #' @description Retrieve data
     #'
     #' @param ... Passed to retrieve_data
     #' @inheritParams retrieve_data(...)
@@ -192,7 +198,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       retrieve_data(self$url, ...)
     },
 
-    #' Retrieve all data pages
+    #' @description Retrieve all data pages
     #'
     #' Return concatenation of value of all pages
     #'
@@ -202,7 +208,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       retrieve_all(self$url, ...)
     },
 
-    #' Retrieve individual
+    #' @description Retrieve individual
     #'
     #' @param ... Passed to retrieve_one
     #' @inheritParams retrieve_one(...)
