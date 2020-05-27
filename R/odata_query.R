@@ -66,14 +66,14 @@ ODataQuery <- R6::R6Class("ODataQuery",
 
     #' @description Print query, useful when debugging.
     #'
-    #' @param top Number of results to print
+    #' @param top Number of records to print. If NULL, print everything.
     #' @param ... Additional parameters are passed to print
     # inheritDotParams print
     #'
     #' @examples
     #' \dontrun{
     #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
-    #' service$print(10)$path("People")$print(0)
+    #' service$print(10)$path("People")$print(NULL)
     #' }
     print = function(top = 3, ...) {
       cat("ODataQuery:", self$url, "\n")
@@ -81,6 +81,9 @@ ODataQuery <- R6::R6Class("ODataQuery",
       if (top > 0) {
         df <- self$top(top)$retrieve(metadata = "minimal",
                                      simplifyVector = TRUE)
+        print(df, ...)
+      } else if (is.null(top)) {
+        df <- self$retrieve(metadata = "minimal", simplifyVector = TRUE)
         print(df, ...)
       }
 
@@ -316,6 +319,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #' @param metadata Which metadata is included
 #' @param simplifyVector Simplifies nested lists into vectors and data frames
 #' @inheritDotParams jsonlite::fromJSON
+#' @return Data including metadata
 #' @export
 #'
 #' @examples
@@ -339,13 +343,14 @@ retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
 }
 
 #' Retrieve data. If data is paged, concatenate pages.
+#' Only return the value.
 #'
 #' @inheritParams retrieve_data
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' url <- "https://services.odata.org/V4/TripPinServiceRW"
+#' url <- "https://services.odata.org/V4/TripPinServiceRW/People"
 #' retrieve_all(url)
 #' }
 retrieve_all <- function(url, ...) {
@@ -373,7 +378,8 @@ retrieve_all <- function(url, ...) {
 #' @param default The default if nothing was found.
 #' If not specified, an error is thrown in this case.
 #' @inheritParams retrieve_data
-#' @return Single value or default if none. Otherwise an error is thrown.
+#' @return Single value or default if none. If the result consistents of
+#' multiple records, an error is thrown.
 #' @export
 #'
 #' @examples
