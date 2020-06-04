@@ -27,9 +27,9 @@ ODataQuery <- R6::R6Class("ODataQuery",
                              collapse = "&")
 
       if (length(self$query_options) > 0) {
-        result <- paste0(self$service, self$resource, "?", query_string)
+        result <- paste0(self$service, '/', self$resource, "?", query_string)
       } else {
-        result <- paste0(self$service, self$resource)
+        result <- paste0(self$service, '/', self$resource)
       }
       URLencode(result, repeated = TRUE)
     }
@@ -59,7 +59,11 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @examples
     #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     initialize = function(service, resource = "", query_options = list()) {
-      self$service <- service
+      stopifnot(length(service) == 1 && is.character(service))
+      stopifnot(length(resource) == 1 && is.character(resource))
+      stopifnot(is.list(query_options))
+
+      self$service <- trimws(service, whitespace = "[/\\s]")
       self$resource <- resource
       self$query_options <- query_options
     },
@@ -99,6 +103,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity <- service$path("People")
     path = function(...) {
       resource <- paste(self$resource, ..., sep = "/")
+      resource <- trimws(resource, whitespace = "[/\\s]")
       ODataQuery$new(self$service, resource)
     },
 
@@ -164,7 +169,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity <- service$path("People")
     #' people_entity$top(10)
     top = function(n) {
-      stopifnot(is.numeric(n))
+      stopifnot(is.numeric(n) && length(n) == 1)
       return(self$query(`$top` = n))
     },
 
@@ -177,7 +182,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity <- service$path("People")
     #' people_entity$skip(10)
     skip = function(n) {
-      stopifnot(is.numeric(n))
+      stopifnot(is.numeric(n) && length(n) == 1)
       return(self$query(`$skip` = n))
     },
 
@@ -329,7 +334,6 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #' }
 retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
                           simplifyVector = FALSE, ...) {
-
   metadata <- match.arg(metadata)
   accept <- paste0("application/json;odata.metadata=", metadata)
   useragent <- "https://github.com/lverweijen/odata_r"
