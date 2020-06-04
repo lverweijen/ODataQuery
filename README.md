@@ -6,7 +6,7 @@ This package aims to make OData services more accesible to R users.
 ## Example usage
 
 ```{R}
-# Initalisation
+# Initialisation
 URL <- "https://services.odata.org/V4/TripPinServiceRW"
 trip_service <- ODataQuery$new(URL)
 people_resource <- trip_service$path("People") 
@@ -19,10 +19,10 @@ trip_service$path("People")$url()
 trip_service$path("People")$all()
 
 # Find a single person
-people_resource$query(filter=and_query(FirstName.eq='Scott'))$one()
+people_resource$filter(FirstName.eq = 'Scott')$one()
 
 # Include that persons' friends
-people_resource$query(filter=and_query(FirstName.eq='Scott'), expand="Friends")$one()
+people_resource$filter(FirstName.eq = 'Scott')$expand("Friends")$one()
 
 # Find friends of that person
 people_resource$get("scottketchum")$path('Friends')$all()
