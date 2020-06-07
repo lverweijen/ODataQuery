@@ -1,5 +1,6 @@
 # odata_query
 # General methods to make OData url handling easier
+#' @md
 
 
 #' @title ODataQuery
@@ -27,9 +28,9 @@ ODataQuery <- R6::R6Class("ODataQuery",
                              collapse = "&")
 
       if (length(self$query_options) > 0) {
-        result <- paste0(self$service, '/', self$resource, "?", query_string)
+        result <- paste0(self$service, "/", self$resource, "?", query_string)
       } else {
-        result <- paste0(self$service, '/', self$resource)
+        result <- paste0(self$service, "/", self$resource)
       }
       URLencode(result, repeated = TRUE)
     }
@@ -200,8 +201,11 @@ ODataQuery <- R6::R6Class("ODataQuery",
 
     #' @description Apply filter to result
     #'
-    #' @param ... Passed to and_query
+    #' @param ... Can be a raw odata query or query options. It's recommended to use
+    #' query options because these will automatically escape parameters.
+    #' The parameters are passed on to `and_query`.
     #' @inheritParams and_query()
+    #' @seealso [and_query()] for details.
     #'
     #' @examples
     #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
@@ -447,29 +451,67 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   }
 }
 
-#' Create an and-filter with parameters sanitized
+#' @title Create a combined filter
 #' @export
 #'
+#' @param ... Raw odata queries or query options.
+#'
+#' @details
+#' This function can be used with raw values or query options
+#'
+#' 1) Raw odata queries
+#' Raw OData can be passed as string.
+#' It's the responsibility of the caller that the argument is valid syntax
+#' and values are escaped.
+#'
+#' 2) Query options
+#' Query options can be passed as named parameters.
+#'
+#' Query options should be of the following form: `property.operator = value`
+#'
+#' * Property should be a property of the entity or individual.
+#'
+#' * Operation can have any of the following values:
+#'
+#'   * eq Whether property is equal to value.
+#'   * ne Whether property is not equal to value.
+#'   * gt Whether property is greater than value.
+#'   * ge Whether property is greater than or equal to value.
+#'   * lt Whether property is lower than value.
+#'   * le Whether property is lower than or equal to value.
+#'   * has Whether property has value as enumeration property.
+#'   * startswith Whether property starts with value.
+#'   * endswith Whether property ends with value.
+#'   * contains Whether property contains value.
+#'
+#' * Value should be a string, double or boolean
+#'   and will be escaped automatically.
+#'
+#'@md
+#' @seealso <https://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/part2-url-conventions/>
+#'
 #' @examples
-#' and_query(a = 1, "b = 3", c = "d")
+#' and_query("Column eq OtherColumn",
+#'           FirstName.startswith = 'A',
+#'           LastName.eq = 'Scott')
+#'
+#' or_query("ExpireDate eq null",
+#'          ExpireDate.lt = "2020-07-07")
+#'
+#' not_query(or_query(Age.lt = 21, Age.gt = 65))
+#'
 and_query <- function(...) {
   return(binop_query(" and ", ...))
 }
 
-#' Create an or-filter with parameters sanitized
+#' @rdname and_query
 #' @export
-#'
-#' @examples
-#' or_query(a = 1, "b = 3", c = "d")
 or_query <- function(...) {
   return(binop_query(" or ", ...))
 }
 
-#' Create a negative filter with parameters sanitized
+#' @rdname and_query
 #' @export
-#'
-#' @examples
-#' not_query(a = 1, "b = 3", c = "d")
 not_query <- function(...) {
   return(paste("not", and_query(...)))
 }
@@ -479,17 +521,14 @@ not_query <- function(...) {
 binop_query <- function(op, ...) {
   args <- list(...)
 
-   if (is.null(names(args))) {
-     nargs <- rep("", length(args))
+  # Find arg names
+  if (is.null(names(args))) {
+    argnames <- rep("", length(args))
   } else {
-    nargs <- names(args)
+    argnames <- names(args)
   }
 
-  left_hand <- sub(".", " ", nargs, fixed = TRUE)
-  right_hand <- ifelse(nchar(nargs) > 0,
-                       lapply(args, represent_value),
-                       args)
-  query <- paste(left_hand, right_hand, collapse = op)
+  query <- paste(Map(handle_parameter, argnames, args), collapse = op)
   return(paste0("(", query, ")"))
 }
 
@@ -509,6 +548,36 @@ represent_value <- function(x) {
     stop("unknown type")
 
   return(result)
+}
+
+#' Handle parameter
+#' @noRd
+handle_parameter <- function(name, value) {
+  INFIX <- c("eq", "ne", "gt", "ge", "lt", "le", "has")
+  PREFIX <- c("startswith", "endswith", "contains")
+
+  # Handle raw odata query
+  if (is.null(name) || nchar(name) == 0)
+    return(value)
+
+  parts <- strsplit(name, ".", fixed = TRUE)[[1]]
+
+  if (length(parts) != 2)
+    stop("argument name must have format: \"property.operation\"")
+
+  property <- parts[[1]]
+  operator <- parts[[2]]
+
+  if (operator %in% INFIX)
+    result <- paste(property, operator, represent_value(value))
+  else if (operator %in% PREFIX)
+    result <- paste0(operator, "(", property, ",", represent_value(value), ")")
+  else
+    stop(paste0("Unknown operator \"", operator, "\". ",
+                "Operator should be one of: ",
+                paste0("\"", c(INFIX, PREFIX), "\"", collapse = ", ")), ".")
+
+  result
 }
 
 #' Return x if not null, y otherwise (ruby style or)
