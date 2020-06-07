@@ -1,4 +1,4 @@
-# odata_r
+# ODataQuery
 Query on R OData
 
 This package aims to make OData services more accesible to R users.
