@@ -1,0 +1,74 @@
+---
+title: "Demo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{demo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(OdataQuery)
+```
+
+## Introduction
+
+Here I'll show some examples to use this package
+
+## Create service
+
+```{r}
+service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+service$all(simplifyVector = TRUE)
+```
+
+## Entity set
+
+```{r}
+people_entity <- service$path("People")
+
+# Get first page
+people_entity$retrieve(simplifyVector = TRUE)
+
+# Get all pages
+people_entity$select("UserName", "FirstName", "LastName")$all(simplifyVector = TRUE)
+```
+
+
+## Singleton
+
+```{r}
+russellwhyte <- people_entity$get("russellwhyte")
+first_person <- people_entity$top(1)$one()
+head(first_person)
+
+russellwhyte_friends <- russellwhyte$path("Friends")
+russellwhyte_friends$all(simplifyVector = TRUE)
+```
+
+## Function call
+
+```{r}
+get_nearest_airport <- service$func('GetNearestAirport', simplifyVector = TRUE)
+get_nearest_airport(lat = 33, lon = -118)
+```
+
+## Querying
+
+```{r}
+people_query <- people_entity$
+  top(5)$
+  select('FirstName', 'LastName')$
+  filter(Concurrency.gt = 500)$
+  expand('Friends($count=true)')$
+  orderby('LastName')
+
+people_query$all(simplifyVector = TRUE)
+```

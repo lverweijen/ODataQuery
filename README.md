@@ -9,22 +9,29 @@ This package aims to make OData services more accesible to R users.
 # Initialisation
 URL <- "https://services.odata.org/V4/TripPinServiceRW"
 trip_service <- ODataQuery$new(URL)
-people_resource <- trip_service$path("People") 
+people_entity <- trip_service$path("People")
 
-# Find url of people
-trip_service$path("People")$url()
-# [1] "https://services.odata.org/V4/TripPinServiceRW/People?$="
-
-# Get a vector of all persons
-trip_service$path("People")$all()
+# Find all people whose name starts with an R
+people_entity$
+  select("UserName", "FirstName", "LastName")$
+  filter(FirstName.startswith = "R")$
+  all(simplifyVector = TRUE)
 
 # Find a single person
-people_resource$filter(FirstName.eq = 'Scott')$one()
+people_entity$
+  filter(FirstName.eq = 'Scott')$
+  one()
 
-# Include that persons' friends
-people_resource$filter(FirstName.eq = 'Scott')$expand("Friends")$one()
-
-# Find friends of that person
-people_resource$get("scottketchum")$path('Friends')$all()
+# Show friends of that person
+people_entity$
+  get("scottketchum")$
+  path('Friends')$
+  all(simplifyVector = TRUE)
 ```
 
+See vignette [demo](vignettes/demo.Rmd) for more examples.
+
+## Other R packages
+
+- [OData](https://cran.r-project.org/web/packages/OData/) - very basic
+- [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - cbs data only
