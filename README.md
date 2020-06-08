@@ -17,21 +17,27 @@ people_entity$
   filter(FirstName.startswith = "R")$
   all(simplifyVector = TRUE)
 
-# Find a single person
+# Find a person named Scott
 people_entity$
   filter(FirstName.eq = 'Scott')$
   one()
 
-# Show friends of that person
+# Find Scott's friends
 people_entity$
   get("scottketchum")$
   path('Friends')$
   all(simplifyVector = TRUE)
+
+# Retrieve a dataset from Statistics, the Netherlands
+opendata_service <- ODataQuery$new("http://beta-odata4.cbs.nl/")
+entity_81589NED  <- opendata_service$path("CBS", "81589NED", Observations")
+dataset_81589NED <- entity_81589NED$all(simplifyVector = TRUE)
 ```
 
 See vignette [demo](vignettes/demo.Rmd) for more examples.
 
-## Other R packages
+## Other R packages dealing with OData
 
 - [OData](https://cran.r-project.org/web/packages/OData/) - very basic
-- [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - cbs data only
+- [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - for data from Statistics, the Netherlands
+

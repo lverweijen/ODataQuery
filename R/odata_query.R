@@ -28,11 +28,11 @@ ODataQuery <- R6::R6Class("ODataQuery",
                              collapse = "&")
 
       if (length(self$query_options) > 0) {
-        result <- paste0(self$service, "/", self$resource, "?", query_string)
+        result <- paste0(self$service, self$resource, "?", query_string)
       } else {
-        result <- paste0(self$service, "/", self$resource)
+        result <- paste0(self$service, self$resource)
       }
-      URLencode(result, repeated = TRUE)
+      utils::URLencode(result, repeated = TRUE)
     }
   ),
 
@@ -58,13 +58,13 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' instead.
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     initialize = function(service, resource = "", query_options = list()) {
       stopifnot(length(service) == 1 && is.character(service))
       stopifnot(length(resource) == 1 && is.character(resource))
       stopifnot(is.list(query_options))
 
-      self$service <- trimws(service, whitespace = "[/\\s]")
+      self$service <- paste0(trimws(service, whitespace = "[/\\s]"), "/")
       self$resource <- resource
       self$query_options <- query_options
     },
@@ -77,7 +77,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #'
     #' @examples
     #' \dontrun{
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' service$print(10)$path("People")$print(NULL)
     #' }
     print = function(top = 3, ...) {
@@ -100,7 +100,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param ... Components that lead to resource path
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     path = function(...) {
       resource <- paste(self$resource, ..., sep = "/")
@@ -113,7 +113,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param ... ID-parameters (named or unnamed)
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' russellwhyte <- people_entity$get("russellwhyte")
     get = function(...) {
@@ -135,7 +135,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @return closure
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' get_nearest_airport <- service$func('GetNearestAirport',
     #'                                     simplifyVector = TRUE)
     #' \dontrun{
@@ -151,7 +151,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param ... Named lists where the names are custom query options
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$query(filter = "FirstName eq 'scott'")
     query = function(...) {
@@ -166,7 +166,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param n Number of records to return at most
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$top(10)
     top = function(n) {
@@ -179,7 +179,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param n Number of items to skip
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$skip(10)
     skip = function(n) {
@@ -192,7 +192,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param ... Fields to select
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$select("FirstName", "LastName")
     select = function(...) {
@@ -208,7 +208,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @seealso [and_query()] for details.
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$filter(FirstName.eq = 'Scott')
     filter = function(...) {
@@ -220,7 +220,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param ... Properties to extend on
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$expand("Friends")
     expand = function(...) {
@@ -232,7 +232,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' be prefixed by a negative sign.
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$orderby('Concurrency')
     #' people_entity$orderby('-Concurrency')
@@ -250,7 +250,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param s Search string as defined by the endpoint.
     #'
     #' @examples
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$search('Boise')
     search = function(s) {
@@ -265,7 +265,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #'
     #' @examples
     #' # Not really supported by this particular service.
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$compute(a = "5 MUL Concurrency")
     compute = function(...) {
@@ -284,7 +284,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #'
     #' @examples
     #' \dontrun{
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity$retrieve()
     #' }
     retrieve = function(...) {
@@ -300,7 +300,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #'
     #' @examples
     #' \dontrun{
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity$all()
     #' people_entity$all(simplifyVector = TRUE)
     #' }
@@ -315,7 +315,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #'
     #' @examples
     #' \dontrun{
-    #' service <- OdataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity$top(1)$one(default = NA)
     #' }
     one = function(...) {
@@ -325,11 +325,13 @@ ODataQuery <- R6::R6Class("ODataQuery",
 
 #' Retrieve data
 #'
-#' @param metadata Which metadata is included
+#' @param url Which url to fetch data from
+#' @param metadata Whether and how metadata is included
 #' @param simplifyVector Simplifies nested lists into vectors and data frames
 #' @inheritDotParams jsonlite::fromJSON
 #' @return Data including metadata
 #' @export
+#' @family retrieve
 #'
 #' @examples
 #' \dontrun{
@@ -355,6 +357,7 @@ retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
 #'
 #' @inheritParams retrieve_data
 #' @export
+#' @family retrieve
 #'
 #' @examples
 #' \dontrun{
@@ -389,6 +392,7 @@ retrieve_all <- function(url, ...) {
 #' @return Single value or default if none. If the result consistents of
 #' multiple records, an error is thrown.
 #' @export
+#' @family retrieve
 #'
 #' @examples
 #' \dontrun{
@@ -432,6 +436,7 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' @inheritParams retrieve_data
 #' #return An R function
 #' @export
+#' @family retrieve
 odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   force(metadata)
   force(list(...))
@@ -444,7 +449,7 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
     left_hand <- ifelse(nchar(nargs) == 0, "", paste(nargs, "="))
     right_hand <- lapply(args, jsonlite::toJSON, auto_unbox = TRUE)
     arg_string <- paste(left_hand, right_hand, collapse = ",")
-    encoded_args <- URLencode(paste0("(", arg_string, ")"))
+    encoded_args <- utils::URLencode(paste0("(", arg_string, ")"))
 
     url <- paste0(url, encoded_args)
     retrieve_data(url, ...)

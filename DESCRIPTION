@@ -8,7 +8,7 @@ Authors@R: person("Laurent", "Verweijen",
 Description: Make querying on OData easier. It exposes an OdataQuery object
     that can be manipuled that provides features such as selection, filtering
     ordering.
-License: GPL3
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
@@ -18,5 +18,7 @@ Imports:
 RoxygenNote: 7.1.0
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat,
+    utils
 VignetteBuilder: knitr
