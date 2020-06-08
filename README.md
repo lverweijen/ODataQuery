@@ -28,10 +28,17 @@ people_entity$
   path('Friends')$
   all(simplifyVector = TRUE)
 
-# Retrieve a dataset from Statistics, the Netherlands
+# Statistics, the Netherlands
 opendata_service <- ODataQuery$new("http://beta-odata4.cbs.nl/")
 entity_81589NED  <- opendata_service$path("CBS", "81589NED", Observations")
 dataset_81589NED <- entity_81589NED$all(simplifyVector = TRUE)
+
+# Northwind (Older OData api v2)
+northwind_service <- ODataQuery$new("https://services.odata.org/V2/Northwind/Northwind.svc/")
+customer_entity <- northwind_service$path("Customers")
+customer_entity$
+  select("CompanyName", "Address", "Phone")$
+  filter(Country.eq = "Germany", City.eq = "Berlin")
 ```
 
 See vignette [demo](vignettes/demo.Rmd) for more examples.
