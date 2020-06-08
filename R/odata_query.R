@@ -355,7 +355,8 @@ retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
 #' Retrieve data. If data is paged, concatenate pages.
 #' Only return the value.
 #'
-#' @inheritParams retrieve_data
+#' @param url Which url to fetch data from
+#' @inheritDotParams retrieve_data
 #' @export
 #' @family retrieve
 #'
@@ -386,9 +387,10 @@ retrieve_all <- function(url, ...) {
 
 #' Retrieve single instance.
 #'
+#' @param url Which url to fetch data from
 #' @param default The default if nothing was found.
 #' If not specified, an error is thrown in this case.
-#' @inheritParams retrieve_data
+#' @inheritDotParams retrieve_data
 #' @return Single value or default if none. If the result consistents of
 #' multiple records, an error is thrown.
 #' @export
@@ -433,8 +435,10 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' Scalar arguments should be passed as atomic vectors.
 #' Array or object arguments should be passed as list.
 #'
-#' @inheritParams retrieve_data
-#' #return An R function
+#' @param url Which url to fetch data from
+#' @param metadata Whether and how metadata is included
+#' @inheritDotParams retrieve_data
+#' @return An R function
 #' @export
 #' @family retrieve
 odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
