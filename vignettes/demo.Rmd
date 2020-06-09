@@ -72,3 +72,35 @@ people_query <- people_entity$
 
 people_query$all(simplifyVector = TRUE)
 ```
+
+## Other endpoints
+
+### Statistics, the Netherlands
+
+```{r eval=FALSE}
+opendata_service <- ODataQuery$new("http://beta-odata4.cbs.nl/")
+entity_81589NED  <- opendata_service$path("CBS", "81589NED", Observations")
+dataset_81589NED <- entity_81589NED$all(simplifyVector = TRUE)
+```
+
+### Northwind (OData v2)
+
+Connecting with older OData v2 works, but some features have been changed.
+
+```{r eval=FALSE}
+northwind_service <- ODataQuery$new("https://services.odata.org/V2/Northwind/Northwind.svc/")
+customer_entity <- northwind_service$path("Customers")
+customer_entity$
+  select("CompanyName", "Address", "Phone")$
+  filter(Country.eq = "Germany", City.eq = "Berlin")
+```
+
+### The Hague
+
+So far, I haven't been able to figure out how their data model works, but at least we can connect to it.
+
+```{r eval=FALSE}
+denhaag_service <- ODataQuery$new("https://denhaag.incijfers.nl/jiveservices/odata/")
+denhaag_service$path('DataSources')
+```
+
