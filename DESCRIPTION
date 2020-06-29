@@ -1,7 +1,7 @@
-Package: OdataQuery
+Package: ODataQuery
 Type: Package
 Title: Querying on OData
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Laurent", "Verweijen",
     email = "lauwerund+github@gmail.com",
     role = c("aut", "cre"))

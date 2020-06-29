@@ -1,9 +1,16 @@
-# ODataQuery
+# ODataQuery #
 Query on R OData
 
 This package aims to make OData services more accesible to R users.
 
-## Example usage
+## Installation ##
+
+```R
+packages.install("devtools")
+devtools::install_github("https://github.com/lverweijen/ODataQuery")
+```
+
+## Example usage ##
 
 ```R
 # Initialisation
@@ -31,7 +38,7 @@ people_entity$
 
 See vignette [demo](vignettes/demo.Rmd) for more examples.
 
-## Other R packages dealing with OData
+## Other R packages dealing with OData ##
 
 - [OData](https://cran.r-project.org/web/packages/OData/) - very basic
 - [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - for data from Statistics, the Netherlands
