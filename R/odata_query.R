@@ -327,7 +327,6 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #'
 #' @param url Which url to fetch data from
 #' @param metadata Whether and how metadata is included
-#' @param simplifyVector Simplifies nested lists into vectors and data frames
 #' @inheritDotParams jsonlite::fromJSON
 #' @return Data including metadata
 #' @export
@@ -442,7 +441,7 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' @family retrieve
 odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   force(metadata)
-  force(list(...))
+  jsonlite_dots <- force(list(...))
 
   # Create a closure
   function(...) {
@@ -455,7 +454,7 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
     encoded_args <- utils::URLencode(paste0("(", arg_string, ")"))
 
     url <- paste0(url, encoded_args)
-    retrieve_data(url, ...)
+    do.call(retrieve_data, c(url, jsonlite_dots))
   }
 }
 

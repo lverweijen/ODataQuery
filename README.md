@@ -22,7 +22,7 @@ people_entity <- trip_service$path("People")
 people_entity$
   select("UserName", "FirstName", "LastName")$
   filter(FirstName.startswith = "R")$
-  all(simplifyVector = TRUE)
+  all()
 
 # Find a person named Scott
 people_entity$
@@ -33,7 +33,7 @@ people_entity$
 people_entity$
   get("scottketchum")$
   path('Friends')$
-  all(simplifyVector = TRUE)
+  all()
 ```
 
 See vignette [demo](vignettes/demo.Rmd) for more examples.
