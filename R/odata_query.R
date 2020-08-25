@@ -338,7 +338,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #' url <- "https://services.odata.org/V4/TripPinServiceRW"
 #' retrieve_data(url)
 #' }
-retrieve_data <- function(url, metadata = c("none", "minimal", "all"), , ...) {
+retrieve_data <- function(url, metadata = c("none", "minimal", "all"), ...) {
   metadata <- match.arg(metadata)
   accept <- paste0("application/json;odata.metadata=", metadata)
   useragent <- "https://github.com/lverweijen/odata_r"
