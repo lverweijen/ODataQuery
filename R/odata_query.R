@@ -327,7 +327,6 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #'
 #' @param url Which url to fetch data from
 #' @param metadata Whether and how metadata is included
-#' @param simplifyVector Simplifies nested lists into vectors and data frames
 #' @inheritDotParams jsonlite::fromJSON
 #' @return Data including metadata
 #' @export
@@ -338,8 +337,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #' url <- "https://services.odata.org/V4/TripPinServiceRW"
 #' retrieve_data(url)
 #' }
-retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
-                          simplifyVector = FALSE, ...) {
+retrieve_data <- function(url, metadata = c("none", "minimal", "all"), ...) {
   metadata <- match.arg(metadata)
   accept <- paste0("application/json;odata.metadata=", metadata)
   useragent <- "https://github.com/lverweijen/odata_r"
@@ -349,11 +347,11 @@ retrieve_data <- function(url, metadata = c("none", "minimal", "all"),
   httr::stop_for_status(req)
 
   json <- httr::content(req, as = "text", encoding = "UTF-8")
-  jsonlite::fromJSON(json, simplifyVector = simplifyVector, ...)
+  jsonlite::fromJSON(json, ...)
 }
 
 #' Retrieve data. If data is paged, concatenate pages.
-#' Only return the value.
+#' Only return the value without metadata.
 #'
 #' @param url Which url to fetch data from
 #' @inheritDotParams retrieve_data
@@ -443,7 +441,7 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' @family retrieve
 odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   force(metadata)
-  force(list(...))
+  jsonlite_dots <- force(list(...))
 
   # Create a closure
   function(...) {
@@ -456,7 +454,7 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
     encoded_args <- utils::URLencode(paste0("(", arg_string, ")"))
 
     url <- paste0(url, encoded_args)
-    retrieve_data(url, ...)
+    do.call(retrieve_data, c(url, jsonlite_dots))
   }
 }
 

@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(OdataQuery)
+library(ODataQuery)
 ```
 
 ## Introduction
@@ -26,7 +26,7 @@ Here I'll show some examples to use this package
 
 ```{r}
 service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
-service$all(simplifyVector = TRUE)
+service$all()
 ```
 
 ## Entity set
@@ -35,10 +35,10 @@ service$all(simplifyVector = TRUE)
 people_entity <- service$path("People")
 
 # Get first page
-people_entity$retrieve(simplifyVector = TRUE)
+people_entity$retrieve()
 
 # Get all pages
-people_entity$select("UserName", "FirstName", "LastName")$all(simplifyVector = TRUE)
+people_entity$select("UserName", "FirstName", "LastName")$all()
 ```
 
 
@@ -50,13 +50,13 @@ first_person <- people_entity$top(1)$one()
 head(first_person)
 
 russellwhyte_friends <- russellwhyte$path("Friends")
-russellwhyte_friends$all(simplifyVector = TRUE)
+russellwhyte_friends$all()
 ```
 
 ## Function call
 
 ```{r}
-get_nearest_airport <- service$func('GetNearestAirport', simplifyVector = TRUE)
+get_nearest_airport <- service$func('GetNearestAirport')
 get_nearest_airport(lat = 33, lon = -118)
 ```
 
@@ -70,7 +70,7 @@ people_query <- people_entity$
   expand('Friends($count=true)')$
   orderby('LastName')
 
-people_query$all(simplifyVector = TRUE)
+people_query$all()
 ```
 
 ## Other endpoints
@@ -80,7 +80,7 @@ people_query$all(simplifyVector = TRUE)
 ```{r eval=FALSE}
 opendata_service <- ODataQuery$new("http://beta-odata4.cbs.nl/")
 entity_81589NED  <- opendata_service$path("CBS", "81589NED", Observations")
-dataset_81589NED <- entity_81589NED$all(simplifyVector = TRUE)
+dataset_81589NED <- entity_81589NED$all()
 ```
 
 ### Northwind (OData v2)
