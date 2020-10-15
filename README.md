@@ -6,7 +6,7 @@ This package aims to make OData services more accesible to R users.
 ## Installation ##
 
 ```R
-packages.install("devtools")
+install.packages("devtools")
 devtools::install_github("https://github.com/lverweijen/ODataQuery")
 ```
 
