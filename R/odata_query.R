@@ -23,7 +23,9 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @field url Generate (encoded) url
     #' @param value Read-only
     url = function(value) {
-      stopifnot(missing(value))
+      if (!missing(value))
+        stop("url is read-only")
+
       query_string <- paste0(names(self$query_options), "=", self$query_options,
                              collapse = "&")
 
@@ -33,20 +35,32 @@ ODataQuery <- R6::R6Class("ODataQuery",
         result <- paste0(self$service, self$resource)
       }
       utils::URLencode(result, repeated = TRUE)
+    },
+
+    #' @field service Service endpoint
+    service = function(value) {
+      if (missing(value))
+        private$service
+      else
+        stop("service is read-only")
+    },
+
+    #' @field resource Resource name
+    resource = function(value) {
+      if (missing(value))
+        private$resource
+      else
+        stop("resource is read-only")
     }
   ),
 
-  public = list(
-
-    #' @field service Service endpoint
+  private = list(
     service = NULL,
-
-    #' @field resource Resource name
     resource = NULL,
+    query_options = NULL
+  ),
 
-    #' @field query_options Options to query on
-    query_options = NULL,
-
+  public = list(
     #' @description Create a class representing a query.
     #'
     #' @param service The url of the endpoint to connect to.
