@@ -27,3 +27,40 @@
 
 # to_odata(a(b(c(x, 2), 3), 4))
 # "a(b(c(x,2),3),4)"
+
+# > to_odata(list(1, a, 2, 3, "hello"))
+# [1] "[1,a,2,3,\"hello\"]"
+
+# to_odata(a + b + c)
+
+# process_dollar(rlang::expr(a$b$c$d$e(3$f$g)))
+# a$b$c$d$e(`3/f/g`)
+
+# Name in ('Milk', 'Cheese')
+# > to_odata(Name %in% list('Milk', 'Cheese'))
+# odata_expr:  Name in ["Milk","Cheese"]
+
+# > to_odata(5 + "chicken")
+# odata_expr:  5 add 'chicken'
+# > to_odata(5 %add% "chicken")
+# odata_expr:  5 add 'chicken'
+
+# > to_odata(list(FirstName, LastName) %in% list(list("John","Doe"), list("Jane","Smith")))
+# odata_expr:  [FirstName,LastName] in [["John","Doe"],["Jane","Smith"]]
+
+# Error
+# > to_odata(Items$any(d ~ d$Quantity > 100))
+# odata_expr:  Items/any(d:d/Quantity gt 100)
+
+# Good
+# to_odata(any(d ~ d$Quantity > 100))
+# odata_expr:  any(d:d.Quantity gt 100)
+
+# > to_odata(5:3)
+# odata_expr:  [5,4,3]
+
+# > to_odata("hello" %in% c("hello", "goodbye"))
+# odata_expr:  'hello' in ("hello","goodbye")
+
+# > to_odata(c(hello) == c("hello"))
+# odata_expr:  (hello) eq ("hello")
