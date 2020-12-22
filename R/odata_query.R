@@ -47,6 +47,9 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @field query_options Options to query on
     query_options = NULL,
 
+    #' @field httr_args Options to query on
+    httr_args = NULL,
+
     #' @description Create a class representing a query.
     #'
     #' @param service The url of the endpoint to connect to.
@@ -56,10 +59,11 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param query_options List of query options.
     #' It\'s recommended to use methods like $select(), $filter() and $query()
     #' instead.
+    #' @param httr_args Additional parameters to pass to httr::GET
     #'
     #' @examples
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
-    initialize = function(service, resource = "", query_options = list()) {
+    initialize = function(service, resource = "", query_options = list(), httr_args = list()) {
       stopifnot(length(service) == 1 && is.character(service))
       stopifnot(length(resource) == 1 && is.character(resource))
       stopifnot(is.list(query_options))
@@ -67,6 +71,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       self$service <- paste0(trimws(service, whitespace = "[/\\s]"), "/")
       self$resource <- resource
       self$query_options <- query_options
+      self$httr_args <- httr_args
     },
 
     #' @description Print query, useful when debugging.
@@ -84,11 +89,10 @@ ODataQuery <- R6::R6Class("ODataQuery",
       cat("ODataQuery:", self$url, "\n")
 
       if (top > 0) {
-        df <- self$top(top)$retrieve(metadata = "minimal",
-                                     simplifyVector = TRUE)
+        df <- self$top(top)$retrieve(metadata = "minimal")
         print(df, ...)
       } else if (is.null(top)) {
-        df <- self$retrieve(metadata = "minimal", simplifyVector = TRUE)
+        df <- self$retrieve(metadata = "minimal")
         print(df, ...)
       }
 
@@ -105,7 +109,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     path = function(...) {
       resource <- paste(self$resource, ..., sep = "/")
       resource <- trimws(resource, whitespace = "[/\\s]")
-      ODataQuery$new(self$service, resource)
+      ODataQuery$new(self$service, resource, httr_args = self$httr_args)
     },
 
     #' @description Query an individual record by ID parameters
@@ -124,7 +128,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       right_hand <- lapply(args, represent_value)
       body <- paste0(left_hand, right_hand, collapse = ",")
       resource <- paste0(self$resource, "(", body, ")")
-      ODataQuery$new(self$service, resource)
+      ODataQuery$new(self$service, resource, httr_args = self$httr_args)
     },
 
     #' @description Path to an OData function
@@ -136,14 +140,13 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #'
     #' @examples
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
-    #' get_nearest_airport <- service$func('GetNearestAirport',
-    #'                                     simplifyVector = TRUE)
+    #' get_nearest_airport <- service$func('GetNearestAirport')
     #' \dontrun{
     #' get_nearest_airport(lat = 33, lon = -118)
     #' }
     func = function(fname, ...) {
       url <- paste(self$url, fname, sep = "/")
-      odata_function(url, ...)
+      odata_function(url, ..., httr_args = self$httr_args)
     },
 
     #' @description Supply custom query options that do not start with $
@@ -158,7 +161,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       new_options <- list(...)
       query_options <- self$query_options
       query_options[names(new_options)] <- new_options
-      return(ODataQuery$new(self$service, self$resource, query_options))
+      return(ODataQuery$new(self$service, self$resource, query_options, httr_args = self$httr_args))
     },
 
     #' @description Limit the number of results to n
@@ -279,6 +282,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
 
     #' @description Retrieve data
     #'
+    #' @param count Whether to include a count of the total number of records
     #' @param ... Passed to retrieve_data
     #' @inheritParams retrieve_data(...)
     #'
@@ -287,8 +291,13 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity$retrieve()
     #' }
-    retrieve = function(...) {
-      retrieve_data(self$url, ...)
+    retrieve = function(count = FALSE, ...) {
+      if (missing(count)) {
+        url <- self$url
+      } else {
+        url <- self$query(`$count` = represent_value(count))$url
+      }
+      retrieve_data(url, ..., httr_args = self$httr_args)
     },
 
     #' @description Retrieve all data pages
@@ -296,16 +305,16 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' Return concatenation of value of all pages
     #'
     #' @param ... Passed to retrieve_all
-    # inheritDotParams retrieve_all(...)
+    #' @inheritParams retrieve_all(...)
     #'
     #' @examples
     #' \dontrun{
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity$all()
-    #' people_entity$all(simplifyVector = TRUE)
+    #' people_entity$all(jsonlite_args = list(simplifyVector = False))
     #' }
     all = function(...) {
-      retrieve_all(self$url, ...)
+      retrieve_all(self$url, ..., httr_args = self$httr_args)
     },
 
     #' @description Retrieve individual
@@ -319,7 +328,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity$top(1)$one(default = NA)
     #' }
     one = function(...) {
-      retrieve_one(self$url, ...)
+      retrieve_one(self$url, ..., httr_args = self$httr_args)
     }
   ))
 
@@ -327,7 +336,8 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #'
 #' @param url Which url to fetch data from
 #' @param metadata Whether and how metadata is included
-#' @inheritDotParams jsonlite::fromJSON
+#' @param httr_args List of additional arguments passed on to httr::GET
+#' @param jsonlite_args List of additional arguments passed on to jsonlite::fromJSON
 #' @return Data including metadata
 #' @export
 #' @family retrieve
@@ -337,17 +347,21 @@ ODataQuery <- R6::R6Class("ODataQuery",
 #' url <- "https://services.odata.org/V4/TripPinServiceRW"
 #' retrieve_data(url)
 #' }
-retrieve_data <- function(url, metadata = c("none", "minimal", "all"), ...) {
+retrieve_data <- function(url,
+                          metadata = c("none", "minimal", "all"),
+                          httr_args = list(),
+                          jsonlite_args = list()) {
   metadata <- match.arg(metadata)
   accept <- paste0("application/json;odata.metadata=", metadata)
   useragent <- "https://github.com/lverweijen/odata_r"
 
-  req <- httr::GET(url, httr::add_headers(Accept = accept,
-                                          UserAgent = useragent))
+  args <- list(url, httr::add_headers(Accept = accept, UserAgent = useragent))
+  req <- do.call(httr::GET, c(args, httr_args))
   httr::stop_for_status(req)
 
   json <- httr::content(req, as = "text", encoding = "UTF-8")
-  jsonlite::fromJSON(json, ...)
+  parsed <- do.call(jsonlite::fromJSON, c(json, jsonlite_args))
+  parsed
 }
 
 #' Retrieve data. If data is paged, concatenate pages.
@@ -441,7 +455,7 @@ retrieve_one <- function(url, default = stop("value not found"), ...) {
 #' @family retrieve
 odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   force(metadata)
-  jsonlite_dots <- force(list(...))
+  outer_dots <- force(list(...))
 
   # Create a closure
   function(...) {
@@ -454,7 +468,7 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
     encoded_args <- utils::URLencode(paste0("(", arg_string, ")"))
 
     url <- paste0(url, encoded_args)
-    do.call(retrieve_data, c(url, jsonlite_dots))
+    do.call(retrieve_data, c(url, outer_dots))
   }
 }
 

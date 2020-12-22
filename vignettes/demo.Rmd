@@ -35,7 +35,7 @@ service$all()
 people_entity <- service$path("People")
 
 # Get first page
-people_entity$retrieve()
+people_entity$retrieve(count=TRUE)
 
 # Get all pages
 people_entity$select("UserName", "FirstName", "LastName")$all()

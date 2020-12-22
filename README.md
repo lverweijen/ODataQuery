@@ -14,8 +14,8 @@ devtools::install_github("https://github.com/lverweijen/ODataQuery")
 
 ```R
 # Initialisation
-URL <- "https://services.odata.org/V4/TripPinServiceRW"
-trip_service <- ODataQuery$new(URL)
+url <- "https://services.odata.org/V4/TripPinServiceRW"
+trip_service <- ODataQuery$new(url)
 people_entity <- trip_service$path("People")
 
 # Find all people whose name starts with an R
