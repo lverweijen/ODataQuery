@@ -472,6 +472,44 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
   }
 }
 
+#' Create an enum that can be used in combination with ODataQuery$filter
+#' @param name Enum name
+#' @param namespace Namespace where the enum is located
+#' @param levels List of members
+#'
+#' @examples
+#' gender <- odata_enum("PersonGender",
+#'                      levels = c("Male", "Female"),
+#'                      namespace = "Microsoft.OData.SampleService.Models.TripPin")
+#' and_query(Gender.eq = gender$Male)
+#' @export
+#'
+odata_enum <- function(name, levels, namespace) {
+  result <- list()
+
+  for (level in levels) {
+    member <- paste0(namespace, ".", name, represent_value(level))
+    result[[level]] <- structure(member, class = "odata_query")
+  }
+
+  result <- as.environment(result)
+  structure(result, class = "odata_enum", name = name, namespace = namespace)
+}
+
+#' @describeIn print
+print.odata_enum <- function(enum) {
+  name <- attr(enum, "name")
+  namespace <- attr(enum, "namespace")
+
+  cat("odata_enum\n")
+  cat(paste("  name:", name), "\n")
+  cat(paste("  namespace:", namespace), "\n")
+  cat("  levels:\n")
+
+  for (name in names(enum))
+    cat(paste0("   - ", name), "\n")
+}
+
 #' @title Create a combined filter
 #' @export
 #'
@@ -556,7 +594,12 @@ binop_query <- function(op, ...) {
 #' Sanitize parameters for use in url
 #' @noRd
 represent_value <- function(x) {
-  if (is.character(x))
+  if (class(x) == "odata_query")
+    return(x)
+
+  if (length(x) > 1)
+    result <- lapply(x, represent_value)
+  else if (is.character(x))
     # Escape single quotes
     result <- paste0("'", gsub("'", "''", x), "'")
   else if (is.numeric(x))
@@ -568,7 +611,7 @@ represent_value <- function(x) {
   else
     stop("unknown type")
 
-  return(result)
+  structure(result, class = "odata_query")
 }
 
 #' Handle parameter
