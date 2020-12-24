@@ -26,17 +26,17 @@ people_entity$
 
 # Find a person named Scott
 people_entity$
-  filter(to_odata(FirstName == 'Scott'))$
+  filter(to_odata(FirstName == "Scott"))$
   one()
 
 # Find Scott's friends
 people_entity$
   get("scottketchum")$
-  path('Friends')$
+  path("Friends")$
   all()
 ```
 
-See vignette [demo](vignettes/demo.Rmd) for more examples.
+See vignettes [demo](vignettes/demo.Rmd) and [querying](vignettes/querying.Rmd) for more examples.
 
 ## Other R packages dealing with OData ##
 
