@@ -21,12 +21,12 @@ people_entity <- trip_service$path("People")
 # Find all people whose name starts with an R
 people_entity$
   select("UserName", "FirstName", "LastName")$
-  filter(FirstName.startswith = "R")$
+  filter(to_odata(startsWith(FirstName, "R")))$
   all()
 
 # Find a person named Scott
 people_entity$
-  filter(FirstName.eq = 'Scott')$
+  filter(to_odata(FirstName == 'Scott'))$
   one()
 
 # Find Scott's friends
@@ -41,5 +41,6 @@ See vignette [demo](vignettes/demo.Rmd) for more examples.
 ## Other R packages dealing with OData ##
 
 - [OData](https://cran.r-project.org/web/packages/OData/) - very basic
-- [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - for data from Statistics, the Netherlands
+- [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - for data from Statistics, the Netherlands in particular
+- [odataR](https://github.com/HanOostdijk/odataR/)
 

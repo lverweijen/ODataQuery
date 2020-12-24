@@ -1,0 +1,63 @@
+---
+title: "Querying"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{querying}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ODataQuery)
+service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+people_entity <- service$path("People")
+```
+
+There are three ways to query data using this package.
+
+### Directly write OData query
+
+The most direct way is to directly write your query in OData.
+
+- Fast
+- Can express any query
+- You need to sanitize your inputs
+- Can be hard to read if mixing with user code
+
+```{R}
+people_entity$filter("Concurrency gt 500")
+people_entity$filter("Friends/any(f: f/FirstName eq 'John')")
+```
+
+
+### Using `and_query`, `or_query` and `not_query`
+
+- Automatically sanitized
+- Easy to read
+- Not every query can be written this way
+
+```{R}
+people_entity$filter(Concurrency.gt = 500)
+people_entity$filter(or_query(Concurrency.lt = 500, Concurrency.gt = 1500))
+```
+
+### Using `to_odata`
+
+- Most readable
+- Can express any query
+- Automatically sanitized, use !! to unquote
+- Slower to process than the other options
+
+```{R}
+people_entity$filter(to_odata(Concurrency > 500))
+name <- 'John'
+people_entity$filter(to_odata(Friends$any(f ~ f$FirstName == !!name)))
+```
+
