@@ -331,5 +331,3 @@ ODataQuery <- R6::R6Class("ODataQuery",
       retrieve_one(self$url, ..., httr_args = self$httr_args)
     }
   ))
-
-# vim: ts=2 sts=2 sw=2 expandtab

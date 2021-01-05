@@ -156,4 +156,3 @@ expect_equal_character(
 expect_equal_character(
  not_query(or_query(Age.lt = 21, Age.gt = 65)),
  "not ((Age lt 21 or Age gt 65))")
-

@@ -346,4 +346,3 @@ represent_value <- function(x, double = FALSE) {
 
   odata_expr(result)
 }
-

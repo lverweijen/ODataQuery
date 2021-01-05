@@ -14,4 +14,3 @@ Additional parameters to jsonlite can from now on be supplied by a parameter `ht
 This can be useful if you are behind a proxyserver or if authentication is required.
 
 * Method `retrieve` on ODataQuery takes a new parameter `count`.
-

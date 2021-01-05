@@ -60,4 +60,3 @@ people_entity$filter(to_odata(Concurrency > 500))
 name <- 'John'
 people_entity$filter(to_odata(Friends$any(f ~ f$FirstName == !!name)))
 ```
-

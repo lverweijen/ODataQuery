@@ -137,5 +137,3 @@ odata_function <- function(url, metadata = c("none", "minimal", "all"), ...) {
     do.call(retrieve_data, c(url, outer_dots))
   }
 }
-
-# vim: ts=2 sts=2 sw=2 expandtab
