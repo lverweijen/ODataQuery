@@ -1,3 +1,8 @@
+# ODataQuery 0.5.1
+
+* `top` and `skip` get 10 as default parameter
+* `print` by default prints the whole data.frame
+
 # ODataQuery 0.5.0
 
 * New function `to_odata` that translates R code for use in an OData query.

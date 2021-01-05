@@ -14,7 +14,7 @@
 #' \itemize{
 #' \item Use methods such as `$path()` and `$get()` to find a path.
 #' \item Use methods such as `$select()` and `$filter()` to make your query.
-#' \item Use methods such as`$retrieve()`, `$all()` and `$one()`to obtain
+#' \item Use methods such as `$retrieve()`, `$all()` and `$one()` to obtain
 #' the results.
 #' }
 #' @export
@@ -85,14 +85,14 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' service$print(10)$path("People")$print(NULL)
     #' }
-    print = function(top = 3, ...) {
+    print = function(top = NULL, ...) {
       cat("ODataQuery:", self$url, "\n")
 
-      if (top > 0) {
-        df <- self$top(top)$retrieve(metadata = "minimal")
-        print(df, ...)
-      } else if (is.null(top)) {
+      if (is.null(top)) {
         df <- self$retrieve(metadata = "minimal")
+        print(df, ...)
+      } else if (top > 0) {
+        df <- self$top(top)$retrieve(metadata = "minimal")
         print(df, ...)
       }
 
@@ -172,7 +172,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$top(10)
-    top = function(n) {
+    top = function(n = 10) {
       stopifnot(is.numeric(n) && length(n) == 1)
       return(self$query(`$top` = n))
     },
@@ -185,7 +185,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     #' people_entity$skip(10)
-    skip = function(n) {
+    skip = function(n = 10) {
       stopifnot(is.numeric(n) && length(n) == 1)
       return(self$query(`$skip` = n))
     },
