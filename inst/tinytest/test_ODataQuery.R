@@ -8,9 +8,16 @@ expect_equal(service$url, "testurl.org/")
 service <- ODataQuery$new("testurl.org")
 expect_equal(service$url, "testurl.org/")
 
-# Resource or singleton
+# Resource
 item_resource <- service$path("Items")
 expect_equal(item_resource$url, "testurl.org/Items")
+
+# Singleton
+item_singleton <- service$path("Items")$get("it0001")
+expect_equal(item_singleton$url, "testurl.org/Items('it0001')")
+
+item_singleton <- service$path("Items")$get(ItemId = "it0001")
+expect_equal(item_singleton$url, "testurl.org/Items(ItemId='it0001')")
 
 # Queries
 expect_equal(item_resource$select("First", "Second", "Third")$url,
