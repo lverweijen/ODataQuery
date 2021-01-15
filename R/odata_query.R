@@ -205,6 +205,20 @@ ODataQuery <- R6::R6Class("ODataQuery",
       return(self$query(`$filter` = and_query(...)))
     },
 
+    #' #description Add filter but uses R syntax
+    #'
+    #' This function is equivalent to using `$filter(to_odata(<expr>))`.
+    #'
+    #' @param expr A filter expression written using R syntax.
+    #'
+    #' @examples
+    #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
+    #' people_entity <- service$path("People")
+    #' people_entity$where(FirstName == 'Scott')
+    where = function(expr) {
+      self$filter(to_odata_(rlang::enexpr(expr)))
+    },
+
     #' @description Expand on expansion properties
     #'
     #' @param ... Properties to extend on

@@ -1,3 +1,7 @@
+# ODataQuery 0.5.3
+
+* New function `$where(query)` has been added. It is equivalent to using `filter(to_odata(query)))`.
+
 # ODataQuery 0.5.2
 
 * Make all fields of ODataQuery private except `url`.

@@ -60,3 +60,9 @@ people_entity$filter(to_odata(Concurrency > 500))
 name <- 'John'
 people_entity$filter(to_odata(Friends$any(f ~ f$FirstName == !!name)))
 ```
+
+A shortcut is included that makes `where(...)` equivalent to `filter(to_odata(...))`.
+So the last line can also be written as:
+```{R}
+people_entity$where(Friends$any(f ~ f$FirstName == !!name))
+```

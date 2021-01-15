@@ -66,7 +66,7 @@ get_nearest_airport(lat = 33, lon = -118)
 people_query <- people_entity$
   top(5)$
   select('FirstName', 'LastName')$
-  filter(Concurrency.gt = 500)$
+  filter(Concurrency.gt = 500)$  # Equivalent: where(Concurrency < 500)
   expand('Friends($count=true)')$
   orderby('LastName')
 
@@ -79,7 +79,7 @@ people_query$all()
 
 ```{r eval=FALSE}
 opendata_service <- ODataQuery$new("http://beta-odata4.cbs.nl/")
-entity_81589NED  <- opendata_service$path("CBS", "81589NED", Observations")
+entity_81589NED  <- opendata_service$path("CBS", "81589NED", "Observations")
 dataset_81589NED <- entity_81589NED$all()
 ```
 
@@ -92,7 +92,7 @@ northwind_service <- ODataQuery$new("https://services.odata.org/V2/Northwind/Nor
 customer_entity <- northwind_service$path("Customers")
 customer_entity$
   select("CompanyName", "Address", "Phone")$
-  filter(Country.eq = "Germany", City.eq = "Berlin")
+  filter(Country.eq = "Germany", City.eq = "Berlin")  # Equivalent: where(Country == "Germany" && City == "Berlin")
 ```
 
 ### The Hague
@@ -103,4 +103,3 @@ So far, I haven't been able to figure out how their data model works, but at lea
 denhaag_service <- ODataQuery$new("https://denhaag.incijfers.nl/jiveservices/odata/")
 denhaag_service$path('DataSources')
 ```
-
