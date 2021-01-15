@@ -24,54 +24,40 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @param value Read-only
     url = function(value) {
       stopifnot(missing(value))
-      query_string <- paste0(names(self$query_options), "=", self$query_options,
+      query_string <- paste0(names(private$query_options), "=", private$query_options,
                              collapse = "&")
 
-      if (length(self$query_options) > 0) {
-        result <- paste0(self$service, self$resource, "?", query_string)
+      if (length(private$query_options) > 0) {
+        result <- paste0(private$service, private$resource, "?", query_string)
       } else {
-        result <- paste0(self$service, self$resource)
+        result <- paste0(private$service, private$resource)
       }
       utils::URLencode(result, repeated = TRUE)
     }
   ),
 
   public = list(
-
-    #' @field service Service endpoint
-    service = NULL,
-
-    #' @field resource Resource name
-    resource = NULL,
-
-    #' @field query_options Options to query on
-    query_options = NULL,
-
-    #' @field httr_args Options to query on
-    httr_args = NULL,
-
     #' @description Create a class representing a query.
     #'
     #' @param service The url of the endpoint to connect to.
     #' This url should not end with backslash.
-    #' @param resource Name of resource. It\'s recommended to use $path()
-    #' instead.
-    #' @param query_options List of query options.
-    #' It\'s recommended to use methods like $select(), $filter() and $query()
-    #' instead.
+    #' @param .resource Should not be used directly. Use $path() instead.
+    #' @param .query_options Should not be used directly.
+    #' Use methods such as $select(), $filter() and $query() instead.
     #' @param httr_args Additional parameters to pass to httr::GET
     #'
     #' @examples
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
-    initialize = function(service, resource = "", query_options = list(), httr_args = list()) {
+    initialize = function(service, .resource = "", .query_options = list(), httr_args = list()) {
       stopifnot(length(service) == 1 && is.character(service))
-      stopifnot(length(resource) == 1 && is.character(resource))
-      stopifnot(is.list(query_options))
+      stopifnot(length(.resource) == 1 && is.character(.resource))
+      stopifnot(is.list(.query_options))
+      stopifnot(is.list(httr_args))
 
-      self$service <- paste0(trimws(service, whitespace = "[/\\s]"), "/")
-      self$resource <- resource
-      self$query_options <- query_options
-      self$httr_args <- httr_args
+      private$service <- paste0(trimws(service, whitespace = "[/\\s]"), "/")
+      private$resource <- .resource
+      private$query_options <- .query_options
+      private$httr_args <- httr_args
     },
 
     #' @description Print query, useful when debugging.
@@ -107,9 +93,9 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
     path = function(...) {
-      resource <- paste(self$resource, ..., sep = "/")
+      resource <- paste(private$resource, ..., sep = "/")
       resource <- trimws(resource, whitespace = "[/\\s]")
-      ODataQuery$new(self$service, resource, httr_args = self$httr_args)
+      ODataQuery$new(private$service, resource, httr_args = private$httr_args)
     },
 
     #' @description Query an individual record by ID parameters
@@ -127,8 +113,8 @@ ODataQuery <- R6::R6Class("ODataQuery",
                           names(args))
       right_hand <- lapply(args, represent_value)
       body <- paste0(left_hand, right_hand, collapse = ",")
-      resource <- paste0(self$resource, "(", body, ")")
-      ODataQuery$new(self$service, resource, httr_args = self$httr_args)
+      resource <- paste0(private$resource, "(", body, ")")
+      ODataQuery$new(private$service, resource, httr_args = private$httr_args)
     },
 
     #' @description Path to an OData function
@@ -146,7 +132,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' }
     func = function(fname, ...) {
       url <- paste(self$url, fname, sep = "/")
-      odata_function(url, ..., httr_args = self$httr_args)
+      odata_function(url, ..., httr_args = private$httr_args)
     },
 
     #' @description Supply custom query options that do not start with $
@@ -159,9 +145,10 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity$query(filter = "FirstName eq 'scott'")
     query = function(...) {
       new_options <- list(...)
-      query_options <- self$query_options
+      query_options <- private$query_options
       query_options[names(new_options)] <- new_options
-      return(ODataQuery$new(self$service, self$resource, query_options, httr_args = self$httr_args))
+      return(ODataQuery$new(private$service, private$resource, query_options,
+                            httr_args = private$httr_args))
     },
 
     #' @description Limit the number of results to n
@@ -297,7 +284,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
       } else {
         url <- self$query(`$count` = represent_value(count))$url
       }
-      retrieve_data(url, ..., httr_args = self$httr_args)
+      retrieve_data(url, ..., httr_args = private$httr_args)
     },
 
     #' @description Retrieve all data pages
@@ -314,7 +301,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity$all(jsonlite_args = list(simplifyVector = False))
     #' }
     all = function(...) {
-      retrieve_all(self$url, ..., httr_args = self$httr_args)
+      retrieve_all(self$url, ..., httr_args = private$httr_args)
     },
 
     #' @description Retrieve individual
@@ -328,6 +315,23 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' people_entity$top(1)$one(default = NA)
     #' }
     one = function(...) {
-      retrieve_one(self$url, ..., httr_args = self$httr_args)
+      retrieve_one(self$url, ..., httr_args = private$httr_args)
     }
-  ))
+  ),
+
+  private = list(
+    # service Service endpoint
+    service = NULL,
+
+    # resource Resource name
+    resource = NULL,
+
+    # query_options Options to query on
+    query_options = NULL,
+
+    # httr_args Options to query on
+    httr_args = NULL
+  ),
+
+  cloneable = FALSE
+)
