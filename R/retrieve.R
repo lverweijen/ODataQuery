@@ -69,7 +69,7 @@ retrieve_all <- function(url, ...) {
 #' @param default The default if nothing was found.
 #' If not specified, an error is thrown in this case.
 #' @inheritDotParams retrieve_data
-#' @return Single value or default if none. If the result consistents of
+#' @return Single value or default if none. If the result consists of
 #' multiple records, an error is thrown.
 #' @export
 #' @family retrieve

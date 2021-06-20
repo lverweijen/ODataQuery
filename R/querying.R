@@ -159,7 +159,6 @@ odata_c <- function(...) {
 #' @param ... Contents of array
 #' @noRd
 odata_list <- function(...) {
-  # represent_value(list(...))
   odata_expr(
     '[' %s+% paste(lapply(list(...), represent_value, double = TRUE), collapse=",") %s+% ']'
     )

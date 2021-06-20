@@ -6,8 +6,8 @@ Authors@R: person("Laurent", "Verweijen",
     email = "lauwerund+github@gmail.com",
     role = c("aut", "cre"))
 Description: Make querying on OData easier. It exposes an OdataQuery object
-    that can be manipuled that provides features such as selection, filtering
-    ordering.
+    that can be manipulated and provides features such as selection, filtering
+    and ordering.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

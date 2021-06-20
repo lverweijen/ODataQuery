@@ -3,3 +3,5 @@
 ^doc$
 ^Meta$
 ^.editorconfig
+cran-comments.md
+^CRAN-RELEASE$
