@@ -1,3 +1,9 @@
+# ODataQuery 0.5.3
+
+* Concessions to get it published on cran:
+- By default print, doesn't print any records.
+- `prefix_functions` accepts dummy dot-arguments but raises an error when called with more than one arguments
+
 # ODataQuery 0.5.2
 
 * Make all fields of ODataQuery private except `url`.

@@ -11,7 +11,7 @@
 #'
 #' Only a subset of R is supported.
 #'
-#' * arithmatic
+#' * arithmetic
 #' The operators +, -, *, / and %% are mapped to add, sub, mul, divby and mod respectively
 #'
 #' * strings (characters in R)
@@ -87,8 +87,12 @@ process_dollar <- function(expr) {
 
 #' Create a prefix function
 #' @param f Function name in OData
+#' @param ... Only used to suppress warning: ... may be used in an incorrect context
 #' @noRd
-prefix_function <- function(f) {
+prefix_function <- function(f, ...) {
+  if (length(list(...) != 0))
+    stop("prefix_function only takes one argument")
+
   rlang::new_function(
     rlang::exprs(... = ),
     rlang::expr(
@@ -102,6 +106,9 @@ prefix_function <- function(f) {
     rlang::caller_env()
   )
 }
+
+# Suppress warning: No visible binding for global variable e1, e2
+e1 <- e2 <- NULL
 
 #' Create an infix function
 #' @param sep Separator to use in OData syntax

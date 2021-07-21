@@ -62,22 +62,19 @@ ODataQuery <- R6::R6Class("ODataQuery",
 
     #' @description Print query, useful when debugging.
     #'
-    #' @param top Number of records to print. If NULL, print everything.
+    #' @param top Number of records to print.
     #' @param ... Additional parameters are passed to print
     # inheritDotParams print
     #'
     #' @examples
     #' \dontrun{
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
-    #' service$print(10)$path("People")$print(NULL)
+    #' service$print(10)$path("People")$print()
     #' }
-    print = function(top = NULL, ...) {
+    print = function(top = 0, ...) {
       cat("ODataQuery:", self$url, "\n")
 
-      if (is.null(top)) {
-        df <- self$retrieve(metadata = "minimal")
-        print(df, ...)
-      } else if (top > 0) {
+      if (top > 0) {
         df <- self$top(top)$retrieve(metadata = "minimal")
         print(df, ...)
       }
@@ -142,7 +139,7 @@ ODataQuery <- R6::R6Class("ODataQuery",
     #' @examples
     #' service <- ODataQuery$new("https://services.odata.org/V4/TripPinServiceRW")
     #' people_entity <- service$path("People")
-    #' people_entity$query(filter = "FirstName eq 'scott'")
+    #' people_entity$query(filter = "FirstName eq 'scott'")$url
     query = function(...) {
       new_options <- list(...)
       query_options <- private$query_options

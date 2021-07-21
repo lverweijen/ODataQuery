@@ -79,7 +79,7 @@ people_query$all()
 
 ```{r eval=FALSE}
 opendata_service <- ODataQuery$new("http://beta-odata4.cbs.nl/")
-entity_81589NED  <- opendata_service$path("CBS", "81589NED", Observations")
+entity_81589NED  <- opendata_service$path("CBS", "81589NED", "Observations")
 dataset_81589NED <- entity_81589NED$all()
 ```
 

@@ -76,7 +76,7 @@ retrieve_all <- function(url, ...) {
 #'
 #' @examples
 #' \dontrun{
-#' url <- https://services.odata.org/V4/TripPinServiceRW/People?$top=1
+#' url <- "https://services.odata.org/V4/TripPinServiceRW/People?$top=1"
 #' retrieve_one(url)
 #'
 #' url <- "https://services.odata.org/V4/TripPinServiceRW/People('russellwhyte')"

@@ -1,9 +1,23 @@
+[![CRAN](http://www.r-pkg.org/badges/version/ODataQuery)](http://cran.r-project.org/package=ODataQuery)
+[![status](https://tinyverse.netlify.com/badge/ODataQuery)](https://CRAN.R-project.org/package=ODataQuery)
+[![Downloads](http://cranlogs.r-pkg.org/badges/ODataQuery)](http://cran.r-project.org/package=ODataQuery)
+
+
 # ODataQuery #
 Query on R OData
 
 This package aims to make OData services more accessible to R users.
 
 ## Installation ##
+
+Cran version:
+
+```R
+install.packages("ODataQuery")
+```
+
+
+Development version:
 
 ```R
 install.packages("devtools")
@@ -40,7 +54,7 @@ See vignettes [demo](vignettes/demo.Rmd) and [querying](vignettes/querying.Rmd) 
 
 ## Other R packages dealing with OData ##
 
-- [OData](https://cran.r-project.org/web/packages/OData/) - very basic
-- [cbsodataR](https://cran.r-project.org/web/packages/cbsodataR/) - for data from Statistics, the Netherlands in particular
+- [OData](https://CRAN.R-project.org/package=OData) - very basic
+- [cbsodataR](https://CRAN.R-project.org/package=cbsodataR) - for data from Statistics, the Netherlands in particular
 - [odataR](https://github.com/HanOostdijk/odataR/)
 
